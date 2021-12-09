@@ -24,6 +24,9 @@ int main(){
 
 	Clock clock;
 
+	DeferredTarget target;
+	target.init(320, 240);
+
 	L_Game* layer = new L_Game();
 
 	bool alive = true;
@@ -76,6 +79,27 @@ int main(){
 		clock.update();
 
 		layer->update(clock.dt);
+
+		//Draw
+		target.bind();
+		layer->draw(window.getAspect());
+
+		layer->lights.bind();
+		layer->drawShadowMap();
+
+		layer->lights.sunCSM.bindTexture(3);
+		target.bindFinal();
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
+		layer->sky.draw();
+		target.draw();
+
+		glViewport(0, 0, window.width, window.height);
+		target.display(window.width, window.height);
+
+		window.swap();
+		
+		//Check if alive
 		if(!layer->alive){
 			if(!layer->nextLayer){
 				delete layer;
@@ -86,24 +110,6 @@ int main(){
 				layer = next;
 			}
 		}
-
-		//Draw
-		layer->draw(window.getAspect());
-
-		layer->lights.bind();
-		layer->drawShadowMap();
-
-		layer->lights.sunCSM.bindTexture(3);
-		layer->target.bindFinal();
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_CULL_FACE);
-		layer->sky.draw();
-		layer->target.draw();
-
-		glViewport(0, 0, window.width, window.height);
-		layer->target.display(window.width, window.height);
-
-		window.swap();
 	}
 
 	SDL_Quit();

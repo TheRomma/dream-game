@@ -1,7 +1,6 @@
 #include "game.hpp"
 
 L_Game::L_Game(){
-	target.init(320, 240);
 	uniform.init();
 	kb.init();
 	player.init(Vec3(0,9,5), -3.14*0.0);
@@ -39,7 +38,6 @@ void L_Game::update(float dt){
 
 void L_Game::draw(float aspect){
 	lights.reset();
-	target.bind();
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);

@@ -12,7 +12,6 @@ struct L_Game{
 	void draw(float aspect);
 	void drawShadowMap();
 
-	DeferredTarget target;
 	CommonUniforms uniform;
 	Keyboard kb;
 	Lighting lights;
