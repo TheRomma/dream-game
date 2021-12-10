@@ -10,11 +10,14 @@ L_Game::L_Game(){
 
 	lights.init(512, 512);
 	lights.block.sun.direction = Vec3(1,1,1);
-	lights.block.sun.ambient = Vec3(0.1,0.2,0.1);
+	lights.block.sun.ambient = Vec3(0.2,0.25,0.2);
 	lights.block.sun.diffuse = Vec3(1.7,0.5,0.5);
 	lights.write();
 
 	sky.init("res/sky_test.sk");
+
+	animModel.init("res/animated_model_test.am");
+	anim.init("res/animation_test_3b.ad");
 }
 
 void L_Game::update(float dt){
@@ -29,6 +32,8 @@ void L_Game::update(float dt){
 		nextLayer = new L_Game();
 	}
 	*/
+
+	animModel.pose(anim, abs(cos(timer)*anim.duration));
 
 	timer += delta;
 	player.input(delta, kb);
@@ -64,6 +69,9 @@ void L_Game::draw(float aspect){
 	lights.write();
 
 	level.draw();
+
+	animModel.draw(Mat4::identity());
+
 	proj = Mat4::perspective(3.14 / 4, aspect, 0.01, 10.0);
 	uniform.block.projView = player.camera.getOriginView() * proj;
 	uniform.write();
@@ -81,25 +89,11 @@ void L_Game::drawShadowMap(){
 
 	Vec3 front = player.camera.direction;
 
-	lights.block.sun.projViewCSM[0] = Mat4::lookAt(
-	Vec3::normalize(lights.block.sun.direction) * 100 + (player.position),
-	(player.position), Vec3(0,0,1)) * 
-	Mat4::orthographic(-8, 8, -8, 8, 0.1, 200.0);
-
-	lights.block.sun.projViewCSM[1] = Mat4::lookAt(
-	Vec3::normalize(lights.block.sun.direction) * 100 + (player.position + front * 0),
-	(player.position + front * 0), Vec3(0,0,1)) * 
-	Mat4::orthographic(-16, 16, -16, 16, 0.1, 200.0);
-
-	lights.block.sun.projViewCSM[2] = Mat4::lookAt(
-	Vec3::normalize(lights.block.sun.direction) * 100 + (player.position + front * 0),
-	(player.position + front * 0), Vec3(0,0,1)) * 
-	Mat4::orthographic(-32, 32, -32, 32, 0.1, 200.0);
-
-	lights.block.sun.projViewCSM[3] = Mat4::lookAt(
-	Vec3::normalize(lights.block.sun.direction) * 100 + (player.position + front * 0),
-	(player.position + front * 0), Vec3(0,0,1)) * 
-	Mat4::orthographic(-64, 64, -64, 64, 0.1, 200.0);
+	lights.sunCSM.calcProjViews(10, player.position, lights.block.sun.direction);
+	lights.block.sun.projViewCSM[0] = lights.sunCSM.projView[0];
+	lights.block.sun.projViewCSM[1] = lights.sunCSM.projView[1];
+	lights.block.sun.projViewCSM[2] = lights.sunCSM.projView[2];
+	lights.block.sun.projViewCSM[3] = lights.sunCSM.projView[3];
 
 	lights.write();
 

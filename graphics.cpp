@@ -299,6 +299,18 @@ void CSM::bindTexture(Uint32 base){
 	glBindTexture(GL_TEXTURE_2D_ARRAY, depth);
 }
 
+//Calculate lights projView matrices.
+void CSM::calcProjViews(float nearest, Vec3 target, Vec3 sunDirection){
+	float scale = nearest;
+	for(unsigned int i=0;i<numMaps;i++){
+		projView[i] = Mat4::lookAt(
+		Vec3::normalize(sunDirection) * 100 + (target),
+		(target), Vec3(0,0,1)) * 
+		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 200.0);
+		scale *= 2;
+	}
+}
+
 //-------------------------------------------------------------------------
 
 //Lighting init.
@@ -435,7 +447,7 @@ void DeferredTarget::init(Uint32 width, Uint32 height){
 	#define MAX_POINTLIGHTS [MAX_POINTS]
 	#define MAX_SPOTLIGHTS [MAX_SPOTS]
 
-	#define FOG_DISTANCE 64
+	#define FOG_DISTANCE 80
 
 	out vec4 outColor;
 

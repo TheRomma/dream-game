@@ -86,3 +86,18 @@ struct TextureFile{
 	Uint32 texLength;
 	float* texture;
 };
+
+//Skeletal animation file.
+struct AnimationFile{
+	AnimationFile(const char* filename);
+	~AnimationFile();
+
+	void print();
+
+	Uint32 numFrames;
+	Uint32 numBones;
+	Uint32 animRate;
+
+	Uint32 animLength;
+	char* animation;
+};

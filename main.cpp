@@ -101,7 +101,7 @@ int main(){
 		
 		//Check if alive
 		if(!layer->alive){
-			if(!layer->nextLayer){
+			if(layer->nextLayer == nullptr){
 				delete layer;
 				alive = false;
 			}else{

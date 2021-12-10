@@ -119,8 +119,10 @@ struct CSM{
 
 	void bind();
 	void bindTexture(Uint32 base);
+	void calcProjViews(float nearest, Vec3 target, Vec3 sunDirection);
 
 	Uint32 width, height, numMaps;
+	Mat4 projView[SUN_NUM_SHADOW_CASCADES];
 
 	private:
 	Uint32 frame, depth;

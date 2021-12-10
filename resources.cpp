@@ -230,3 +230,32 @@ TextureFile::TextureFile(const char* filename){
 TextureFile::~TextureFile(){
 	free(texture);
 }
+
+//--------------------------------------------------------------------------------------------------
+
+AnimationFile::AnimationFile(const char* filename){
+	std::ifstream file(filename, std::ios::in|std::ios::binary);
+	file.seekg(0);
+
+	file.read((char*)&numFrames, 4);
+	file.read((char*)&numBones, 4);
+	file.read((char*)&animRate, 4);
+
+	file.read((char*)&animLength, 4);
+	animation = (char*)malloc(animLength);
+	file.read((char*)animation, animLength);
+
+	file.close();
+}
+
+AnimationFile::~AnimationFile(){
+	free(animation);
+}
+
+//Print file values
+void AnimationFile::print(){
+	std::cout<<"numFrames: "<<numFrames<<std::endl;
+	std::cout<<"numBones: "<<numBones<<std::endl;
+	std::cout<<"animRate: "<<animRate<<std::endl;
+	std::cout<<"animLength: "<<animLength<<std::endl;
+}

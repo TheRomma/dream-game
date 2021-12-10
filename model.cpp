@@ -71,8 +71,10 @@ void StaticModel::draw(Mat4 model){
 void AnimatedModel::init(const char* filename){
 	AnimatedModelFile file(filename);
 
-	const char* vertex = R"(#version 430 core
-	#define NUM_BONES REPLACE_NUMBONES
+	std::string vertex = R"(#version 430 core
+	#define UNIFORM_COMMON_BASE [COMMON_BASE]
+
+	#define NUM_BONES [NUM_BONES]
 
 	layout(location = 0) in vec3 POSITION;
 	layout(location = 1) in vec2 UV_COORD;
@@ -82,40 +84,72 @@ void AnimatedModel::init(const char* filename){
 
 	layout(std140, binding = 0) uniform U{
 		mat4 projView;
-		float time;
+		vec4 posTime;
 	};
 
 	layout(location = 0) uniform mat4 u_model;
 	layout(location = 1) uniform mat4 u_joints[NUM_BONES];
 
 	out VS_OUT{
+		vec3 position;
 		vec2 uv_coord;
 		vec3 normal;
+		float distance;
 	} F;
 
 	void main(){
-		gl_Position = projView * u_model * vec4(POSITION, 1.0);
+		vec4 transform = u_model * (
+			u_joints[int(BONES.r)] * vec4(POSITION, 1.0) * WEIGHTS.r +
+			u_joints[int(BONES.g)] * vec4(POSITION, 1.0) * WEIGHTS.g +
+			u_joints[int(BONES.b)] * vec4(POSITION, 1.0) * WEIGHTS.b +
+			u_joints[int(BONES.a)] * vec4(POSITION, 1.0) * WEIGHTS.a
+		);
+		gl_Position = projView * transform;
 
+		F.position = transform.rgb;
 		F.uv_coord = UV_COORD;
-		F.normal = NORMAL;
+		//F.normal = normalize(mat3(transpose(inverse(u_model))) * NORMAL.xyz);
+		F.normal = normalize(mat3(transpose(inverse(u_model))) * (
+			mat3(transpose(inverse(u_joints[int(BONES.r)]))) * NORMAL.xyz * WEIGHTS.r +
+			mat3(transpose(inverse(u_joints[int(BONES.g)]))) * NORMAL.xyz * WEIGHTS.g +
+			mat3(transpose(inverse(u_joints[int(BONES.b)]))) * NORMAL.xyz * WEIGHTS.b +
+			mat3(transpose(inverse(u_joints[int(BONES.a)]))) * NORMAL.xyz * WEIGHTS.a
+		));
+		F.distance = transform.z;
 	}
 	)";
-	const char* fragment = R"(#version 430 core
-	out vec4 outColor;
+	findAndReplace(vertex, "[COMMON_BASE]", std::to_string(UNIFORM_COMMON_BASE));
+	findAndReplace(vertex, "[NUM_BONES]", std::to_string(file.numBones));
+	std::string fragment = R"(#version 430 core
+	#define UNIFORM_COMMON_BASE [COMMON_BASE]
+
+	layout(location = 0) out vec3 gPosition;
+	layout(location = 1) out vec4 gNormal;
+	layout(location = 2) out vec3 gAlbedo;
 
 	in VS_OUT{
+		vec3 position;
 		vec2 uv_coord;
 		vec3 normal;
+		float distance;
 	}F;
+
+	layout(std140, binding = UNIFORM_COMMON_BASE) uniform U{
+		mat4 projView;
+		vec4 posTime;
+	};
 
 	layout(binding = 0) uniform sampler2D u_texture;
 
 	void main(){
-		outColor = texture(u_texture, F.uv_coord);
+		gPosition = F.position;
+		gNormal = vec4(normalize(F.normal), F.distance);
+		gAlbedo = texture(u_texture, F.uv_coord).rgb;
 	}
 	)";	
+	findAndReplace(fragment, "[COMMON_BASE]", std::to_string(UNIFORM_COMMON_BASE));
 
-	shader.init(vertex, fragment);
+	shader.init(vertex.c_str(), fragment.c_str());
 
 	buffer.init(16 * sizeof(float), file.attribLength, file.attributes);
 	buffer.setAttribute(0, 3);
@@ -136,6 +170,13 @@ void AnimatedModel::init(const char* filename){
 //Animated model destructor.
 AnimatedModel::~AnimatedModel(){
 	free(joints);
+}
+
+//Pose animated model.
+void AnimatedModel::pose(Animation& anim, float time){
+	for(unsigned int i=0;i<numBones;i++){
+		joints[i] = anim.calcJoint(i, time);
+	}
 }
 
 //Static model single draw.
@@ -180,7 +221,6 @@ void MultiModel::init(const char* filename){
 		vec4 result = projView * u_model * vec4(POSITION, 1.0);
 		gl_Position = result;
 
-		//F.position = vec4((u_model * vec4(POSITION, 1.0)).rgb, result.z);
 		F.position = (u_model * vec4(POSITION, 1.0)).rgb;
 		F.uv_coord = UV_COORD;
 		F.normal = normalize(mat3(transpose(inverse(u_model))) * NORMAL.xyz);
@@ -430,4 +470,48 @@ void Skybox::draw(){
 	texture.bind(0);
 
 	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+}
+
+//------------------------------------------------------------------------------
+
+void Animation::init(const char* filename){
+	AnimationFile file(filename);
+
+	numFrames = file.numFrames;
+	numBones = file.numBones;
+	animRate = file.animRate;
+
+	transforms = (Joint*)malloc(file.animLength);
+	memcpy(transforms, file.animation, file.animLength);
+
+	duration = (numFrames - 1) / (24.0f / animRate);
+}
+
+Animation::~Animation(){
+	free(transforms);
+}
+
+Mat4 Animation::calcJoint(Uint32 boneIndex, float time){
+	if(boneIndex >= numBones){
+		return Mat4::identity();
+	}
+
+	float frametime = time * (24.0f / animRate);
+	if(frametime >= numFrames - 1){
+		return Mat4::identity();
+	}
+
+	float keyIndex = 0;
+	float fraction = modf(frametime, &keyIndex);
+
+	Uint32 last = (Uint32)keyIndex * numBones + boneIndex;
+	Uint32 next = (Uint32)(keyIndex + 1) * numBones + boneIndex;
+
+	Vec3 position = transforms[last].translation * (1 - fraction) + transforms[next].translation * fraction;
+	Quat rotation = Quat::slerp(transforms[last].rotation, transforms[next].rotation, fraction);
+
+	Mat4 transMat = Mat4::translation(position);
+	Mat4 rotMat = rotation.toMatrix();
+
+	return rotMat * transMat;
 }

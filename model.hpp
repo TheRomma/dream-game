@@ -4,6 +4,30 @@
 #include "graphics.hpp"
 #include "3Dphysics.hpp"
 
+//Joint.
+struct Joint{
+	Vec3 translation;
+	Quat rotation;
+};
+
+//Skeletal animation.
+struct Animation{
+	Animation(){};
+	void init(const char* filename);
+	~Animation();
+
+	Mat4 calcJoint(Uint32 bone, float time);
+
+	float duration;
+
+	private:
+	Uint32 numFrames;
+	Uint32 numBones;
+	Uint32 animRate;
+	
+	Joint* transforms;
+};
+
 //Static single mesh model
 struct StaticModel{
 	StaticModel(){};
@@ -24,7 +48,7 @@ struct AnimatedModel{
 	void init(const char* filename);
 	~AnimatedModel();
 
-	void pose();
+	void pose(Animation& anim, float time);
 	void draw(Mat4 model);
 
 	private:

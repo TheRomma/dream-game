@@ -21,6 +21,9 @@ struct L_Game{
 	float timer;
 	Skybox sky;
 
+	AnimatedModel animModel;
+	Animation anim;
+
 	bool alive;
 	L_Game* nextLayer = nullptr;
 };
