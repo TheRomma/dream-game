@@ -6,10 +6,6 @@
 #include <ctime>
 #include <random>
 
-//#define DEBUG_NEW new(__FILE__, __LINE__)
-//#define new DEBUG_NEW
-
-
 int main(){
 	SDL_Init(SDL_INIT_EVERYTHING);
 

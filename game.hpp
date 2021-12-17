@@ -23,6 +23,7 @@ struct L_Game{
 
 	AnimatedModel animModel;
 	Animation anim;
+	float animTimer;
 
 	bool alive;
 	L_Game* nextLayer = nullptr;

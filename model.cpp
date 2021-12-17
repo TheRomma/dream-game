@@ -501,17 +501,21 @@ Mat4 Animation::calcJoint(Uint32 boneIndex, float time){
 		return Mat4::identity();
 	}
 
-	float keyIndex = 0;
+	double keyIndex = 0;
 	float fraction = modf(frametime, &keyIndex);
 
 	Uint32 last = (Uint32)keyIndex * numBones + boneIndex;
 	Uint32 next = (Uint32)(keyIndex + 1) * numBones + boneIndex;
 
-	Vec3 position = transforms[last].translation * (1 - fraction) + transforms[next].translation * fraction;
+	Vec3 position = Vec3::interpolate(transforms[last].translation, transforms[next].translation, fraction);
 	Quat rotation = Quat::slerp(transforms[last].rotation, transforms[next].rotation, fraction);
+	Vec3 scale = Vec3::interpolate(transforms[last].scaling, transforms[next].scaling, fraction);
 
 	Mat4 transMat = Mat4::translation(position);
 	Mat4 rotMat = rotation.toMatrix();
+	Mat4 scaleMat = Mat4::scale(scale);
 
-	return rotMat * transMat;
+	Mat4 result = scaleMat * rotMat * transMat;
+
+	return result;
 }

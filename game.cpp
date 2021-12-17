@@ -16,8 +16,9 @@ L_Game::L_Game(){
 
 	sky.init("res/sky_test.sk");
 
-	animModel.init("res/animated_model_test.am");
-	anim.init("res/animation_test_3b.ad");
+	animModel.init("res/test_walk_newer.am");
+	anim.init("res/test_inflate.ad");
+	animTimer = 0;
 }
 
 void L_Game::update(float dt){
@@ -33,7 +34,9 @@ void L_Game::update(float dt){
 	}
 	*/
 
-	animModel.pose(anim, abs(cos(timer)*anim.duration));
+	animTimer += delta;
+	if(animTimer > anim.duration){animTimer = 0;}
+	animModel.pose(anim, animTimer);
 
 	timer += delta;
 	player.input(delta, kb);

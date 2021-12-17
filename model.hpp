@@ -8,6 +8,7 @@
 struct Joint{
 	Vec3 translation;
 	Quat rotation;
+	Vec3 scaling;
 };
 
 //Skeletal animation.
@@ -20,7 +21,7 @@ struct Animation{
 
 	float duration;
 
-	private:
+	//private:
 	Uint32 numFrames;
 	Uint32 numBones;
 	Uint32 animRate;

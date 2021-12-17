@@ -324,12 +324,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 94 - ((46 * winheight(0) + 26) / 52)
+let s:l = 8 - ((7 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-94
-normal! 026|
+8
+normal! 0
 tabnext
 edit 3Dmaths.hpp
 set splitbelow splitright
@@ -467,12 +467,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 73 - ((24 * winheight(0) + 25) / 51)
+let s:l = 52 - ((18 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-73
-normal! 043|
+52
+normal! 0
 wincmd w
 argglobal
 if bufexists("3Dmaths.cpp") | buffer 3Dmaths.cpp | else | edit 3Dmaths.cpp | endif
@@ -1292,12 +1292,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 83 - ((34 * winheight(0) + 25) / 51)
+let s:l = 11 - ((7 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-83
-normal! 0
+11
+normal! 017|
 wincmd w
 argglobal
 if bufexists("model.cpp") | buffer model.cpp | else | edit model.cpp | endif
@@ -1421,13 +1421,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 478 - ((42 * winheight(0) + 25) / 51)
+let s:l = 509 - ((30 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-478
+509
 normal! 0
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 73 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 137 + 105) / 211)
 tabnext
@@ -1842,12 +1843,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 24 - ((23 * winheight(0) + 25) / 51)
+let s:l = 26 - ((25 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-24
-normal! 028|
+26
+normal! 020|
 wincmd w
 argglobal
 if bufexists("game.cpp") | buffer game.cpp | else | edit game.cpp | endif
@@ -1971,12 +1972,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 70 - ((33 * winheight(0) + 25) / 51)
+let s:l = 20 - ((19 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-70
-normal! 0
+20
+normal! 031|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 52 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 158 + 105) / 211)
@@ -2530,7 +2531,7 @@ normal! 022|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 2
+tabnext 6
 set stal=1
 badd +1 makefile
 badd +1 main.cpp
@@ -2547,7 +2548,7 @@ badd +366 3Dphysics.cpp
 badd +174 resources.cpp
 badd +1 model.cpp
 badd +46 entities.cpp
-badd +1 game.cpp
+badd +0 game.cpp
 badd +1 graphics.cpp
 badd +1 system.cpp
 badd +127 wrappers.hpp
