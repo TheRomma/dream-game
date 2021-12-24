@@ -59,14 +59,14 @@ void L_Game::draw(float aspect){
 	uniform.block.projView = player.camera.getView() * proj;
 	uniform.block.time = timer;
 
-	/*
-	Pointlight plight;
-	plight.position = Vec3(0,0,2);
-	plight.radius = 12;
-	plight.ambient = Vec3(-1.0,-1.0,-1.0);
-	plight.diffuse = Vec3(0.0, 0.0, 0.0);
+	Spotlight plight;
+	plight.position = Vec3(-7,-40,6);
+	plight.radius = 20;
+	plight.direction = Vec3(1,1,1);
+	plight.cutOff = 1;
+	plight.ambient = Vec3(0.0,0.0,0.1);
+	plight.diffuse = Vec3(0.0, 0.0, 1.0);
 	lights.push(plight);
-	*/
 
 	uniform.write();
 	lights.write();
@@ -74,10 +74,6 @@ void L_Game::draw(float aspect){
 	level.draw();
 
 	animModel.draw(Mat4::identity());
-
-	proj = Mat4::perspective(3.14 / 4, aspect, 0.01, 10.0);
-	uniform.block.projView = player.camera.getOriginView() * proj;
-	uniform.write();
 }
 
 void L_Game::drawShadowMap(){

@@ -26,5 +26,5 @@ struct L_Game{
 	float animTimer;
 
 	bool alive;
-	L_Game* nextLayer = nullptr;
+	//L_Game* nextLayer = nullptr;
 };

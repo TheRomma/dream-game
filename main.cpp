@@ -23,7 +23,7 @@ int main(){
 	DeferredTarget target;
 	target.init(320, 240);
 
-	L_Game* layer = new L_Game();
+	L_Game layer;
 
 	bool alive = true;
 
@@ -50,7 +50,7 @@ int main(){
 					if(mouseY > 50|mouseY < -50){mouseY = 0;}
 					if(mouseX > 50|mouseX < -50){mouseX = 0;}
 
-					layer->player.camera.mouseUpdate(mouseX, mouseY);
+					layer.player.camera.mouseUpdate(mouseX, mouseY);
 					break;
 
 				case SDL_KEYUP:
@@ -64,8 +64,7 @@ int main(){
 						}
 					}
 					if(event.key.keysym.scancode == SDL_SCANCODE_R){
-						layer->nextLayer = new L_Game();
-						layer->alive = false;
+						//layer = L_Game();
 					}
 					break;
 			}
@@ -74,20 +73,20 @@ int main(){
 		//Update
 		clock.update();
 
-		layer->update(clock.dt);
+		layer.update(clock.dt);
 
 		//Draw
 		target.bind();
-		layer->draw(window.getAspect());
+		layer.draw(window.getAspect());
 
-		layer->lights.bind();
-		layer->drawShadowMap();
+		layer.lights.bind();
+		layer.drawShadowMap();
 
-		layer->lights.sunCSM.bindTexture(3);
+		layer.lights.sunCSM.bindTexture(3);
 		target.bindFinal();
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
-		layer->sky.draw();
+		layer.sky.draw();
 		target.draw();
 
 		glViewport(0, 0, window.width, window.height);
@@ -96,15 +95,8 @@ int main(){
 		window.swap();
 		
 		//Check if alive
-		if(!layer->alive){
-			if(layer->nextLayer == nullptr){
-				delete layer;
-				alive = false;
-			}else{
-				L_Game* next = layer->nextLayer;
-				delete layer;
-				layer = next;
-			}
+		if(!layer.alive){
+			alive = false;
 		}
 	}
 

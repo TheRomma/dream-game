@@ -474,8 +474,8 @@ void DeferredTarget::init(Uint32 width, Uint32 height){
 	};
 
 	struct Spotlight{
-		vec4 position;
-		vec4 direction;
+		vec4 position;//vec3 position, float radius
+		vec4 direction;//vec3 direction, float cutoff
 		vec3 ambient;
 		vec3 diffuse;
 	};
@@ -496,6 +496,7 @@ void DeferredTarget::init(Uint32 width, Uint32 height){
 	float calcSunShadow(Sun light, vec3 position, sampler2DArray shadowMap);
 
 	vec3 calcPointlight(Pointlight light, vec3 position, vec3 normal, vec3 albedo);
+	vec3 calcSpotlight(Spotlight light, vec3 position, vec3 normal, vec3 albedo);
 
 	void main(){
 		vec3 normal = texture(u_normal, F.uv_coord).rgb;
@@ -512,6 +513,9 @@ void DeferredTarget::init(Uint32 width, Uint32 height){
 
 				for(unsigned int i=0;i<numLights.r;i++){
 					result += calcPointlight(pointlights[i], position, normal, albedo);
+				}
+				for(unsigned int i=0;i<numLights.b;i++){
+					result += calcSpotlight(spotlights[i], position, normal, albedo);
 				}
 				float fogRatio = distance / FOG_DISTANCE;
 				result = result * (1 - fogRatio) + sun.ambient * fogRatio;
@@ -588,6 +592,26 @@ void DeferredTarget::init(Uint32 width, Uint32 height){
 		vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
 
 		return ambient + diffuse;
+	}
+
+	vec3 calcSpotlight(Spotlight light, vec3 position, vec3 normal, vec3 albedo){
+		vec3 ab = light.position.rgb - position;
+		vec3 direction = normalize(ab);
+
+		float distSquare = dot(ab, ab);
+
+		float diffRatio = max(dot(normal, direction), 0.0);
+		float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
+
+		vec3 ambient = light.ambient * albedo * attenuation;
+		
+		float theta = dot(direction, normalize(-light.direction.rgb));
+		if(theta > cos(light.direction.a)){
+			vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
+			return ambient + diffuse;
+		}else{
+			return ambient;
+		}
 	}
 	)";
 	findAndReplace(fragment, "[COMMON_BASE]", std::to_string(UNIFORM_COMMON_BASE));

@@ -9,7 +9,7 @@ SRC := $(wildcard $(SRC_DIR)*.cpp)
 OBJ := $(patsubst $(SRC_DIR)%.cpp, $(OBJ_DIR)%.o, $(SRC))
 EXE := $(BIN_DIR)executable
 
-CFLAGS := -c -std=c++17 -I/$(INC_DIR)
+CFLAGS := -g -c -std=c++17 -I/$(INC_DIR)
 LFLAGS := -lSDL2 -lGL -lGLEW
 
 all: $(OBJ)

@@ -374,7 +374,12 @@ void Skybox::init(const char* filename){
 	};
 
 	void main(){
-		gl_Position = projView * vec4(POSITION, 1.0);
+		mat4 originView = projView;
+		originView[3][0] = 0;
+		originView[3][1] = 0;
+		originView[3][2] = 0;
+		originView[3][3] = 0.1;
+		gl_Position = originView * vec4(POSITION, 1.0);
 		F.uv_coord = UV_COORD;
 	}
 	)";
