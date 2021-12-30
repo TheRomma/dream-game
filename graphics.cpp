@@ -523,10 +523,14 @@ void DeferredTarget::init(Uint32 width, Uint32 height){
 				result = sun.ambient;
 			}
 
+			float gamma = 1.0;
+			result = result / (result + vec3(1.0));
+			result = pow(result, vec3(1.0 / gamma));
+
 			outColor = vec4(result, 1.0);
 		}else{
-			//outColor = vec4(0.5, 0.5, 0.7, 1.0);
-			discard;
+			outColor = vec4(sun.ambient, 1.0);
+			//discard;
 		}
 	}
 

@@ -39,7 +39,7 @@ void C_Physics::handleCollision(CollisionHandler& handler, PhysicsMesh& mesh){
 void Player::init(Vec3 position, float yaw){
 	this->position = position;
 	physics = C_Physics(1.2, 1.65, position + Vec3(0,0,1));
-	camera.init(position + Vec3(0,0,1.7), yaw, 0.0, 0.002);
+	camera.init(position + Vec3(0,0,1.8), yaw, 0.0, 0.002);
 	runBonus = 0.0;
 }
 
@@ -67,7 +67,7 @@ void Player::update(float delta, CollisionHandler& handler, PhysicsMesh& mesh){
 	physics.handleGravity(delta);
 
 	position = physics.collider.center + Vec3(0,0,-1);
-	camera.position = position + Vec3(0,0,1.7);
+	camera.position = position + Vec3(0,0,1.8);
 }
 
 void Level::init(std::string filename){

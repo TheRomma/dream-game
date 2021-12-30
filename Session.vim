@@ -324,12 +324,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 24 - ((23 * winheight(0) + 26) / 52)
+let s:l = 1 - ((0 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-24
-normal! 019|
+1
+normal! 0
 tabnext
 edit 3Dmaths.hpp
 set splitbelow splitright
@@ -344,8 +344,8 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 78 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 132 + 105) / 211)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -467,12 +467,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 52 - ((18 * winheight(0) + 25) / 51)
+let s:l = 12 - ((11 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-52
-normal! 0
+12
+normal! 07|
 wincmd w
 argglobal
 if bufexists("3Dmaths.cpp") | buffer 3Dmaths.cpp | else | edit 3Dmaths.cpp | endif
@@ -596,15 +596,15 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 253 - ((5 * winheight(0) + 25) / 51)
+let s:l = 24 - ((5 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-253
-normal! 025|
+24
+normal! 02|
 wincmd w
-exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 78 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 132 + 105) / 211)
 tabnext
 edit 3Dphysics.hpp
 set splitbelow splitright
@@ -742,12 +742,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 162 - ((5 * winheight(0) + 25) / 51)
+let s:l = 55 - ((36 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-162
-normal! 010|
+55
+normal! 0
 wincmd w
 argglobal
 if bufexists("3Dphysics.cpp") | buffer 3Dphysics.cpp | else | edit 3Dphysics.cpp | endif
@@ -871,12 +871,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 366 - ((25 * winheight(0) + 25) / 51)
+let s:l = 326 - ((18 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-366
-normal! 021|
+326
+normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 87 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 123 + 105) / 211)
@@ -1696,12 +1696,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 41 - ((31 * winheight(0) + 25) / 51)
+let s:l = 70 - ((36 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-41
-normal! 033|
+70
+normal! 045|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 87 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 123 + 105) / 211)
@@ -1719,8 +1719,8 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 52 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 158 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -1842,12 +1842,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 24 - ((23 * winheight(0) + 25) / 51)
+let s:l = 7 - ((6 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-24
-normal! 05|
+7
+normal! 056|
 wincmd w
 argglobal
 if bufexists("game.cpp") | buffer game.cpp | else | edit game.cpp | endif
@@ -1971,16 +1971,16 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 67 - ((31 * winheight(0) + 25) / 51)
+let s:l = 15 - ((11 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-67
-normal! 037|
+15
+normal! 045|
 wincmd w
 2wincmd w
-exe 'vert 1resize ' . ((&columns * 52 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 158 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
 tabnext
 edit graphics.hpp
 set splitbelow splitright
@@ -2247,12 +2247,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 613 - ((29 * winheight(0) + 25) / 51)
+let s:l = 526 - ((29 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-613
-normal! 026|
+526
+normal! 029|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 73 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 137 + 105) / 211)
@@ -2393,11 +2393,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 33 - ((32 * winheight(0) + 25) / 51)
+let s:l = 52 - ((27 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-33
+52
 normal! 024|
 wincmd w
 argglobal
@@ -2522,19 +2522,19 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 31 - ((18 * winheight(0) + 25) / 51)
+let s:l = 84 - ((35 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-31
-normal! 022|
+84
+normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
 tabnext 8
 set stal=1
 badd +1 makefile
-badd +0 main.cpp
+badd +1 main.cpp
 badd +1 3Dmaths.hpp
 badd +1 3Dphysics.hpp
 badd +1 resources.hpp
@@ -2548,7 +2548,7 @@ badd +366 3Dphysics.cpp
 badd +174 resources.cpp
 badd +1 model.cpp
 badd +46 entities.cpp
-badd +1 game.cpp
+badd +0 game.cpp
 badd +1 graphics.cpp
 badd +1 system.cpp
 badd +127 wrappers.hpp

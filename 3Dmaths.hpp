@@ -9,29 +9,29 @@
 struct Vec3{
 	Vec3();
 	Vec3(float x, float y, float z);
-	Vec3(const Vec3& other);
+	//Vec3(const Vec3& other);
 	~Vec3();
 
 	//Operators
-	Vec3 operator+(const Vec3& u);
-	Vec3 operator-(const Vec3& u);
+	Vec3 operator+(const Vec3 u);
+	Vec3 operator-(const Vec3 u);
 	Vec3 operator*(float s);
 	Vec3 operator/(float s);
-	bool operator==(const Vec3& u);
+	bool operator==(const Vec3 u);
 
 	//Static functions
-	static float dot(const Vec3& u, const Vec3& v);
-	static Vec3 cross(const Vec3& u, const Vec3& v);
-	static Vec3 tripleCross(const Vec3& u, const Vec3& v, const Vec3& w);
-	static Vec3 normalize(const Vec3& u);
-	static Vec3 interpolate(Vec3& u, Vec3& v, float t);
-	static Vec3 max(const Vec3& u, const Vec3& v);
-	static Vec3 min(const Vec3& u, const Vec3& v);
+	static float dot(const Vec3 u, const Vec3 v);
+	static Vec3 cross(const Vec3 u, const Vec3 v);
+	static Vec3 tripleCross(const Vec3 u, const Vec3 v, const Vec3 w);
+	static Vec3 normalize(const Vec3 u);
+	static Vec3 interpolate(Vec3 u, Vec3 v, float t);
+	static Vec3 max(const Vec3 u, const Vec3 v);
+	static Vec3 min(const Vec3 u, const Vec3 v);
 
 	//Internal functions.
 	void normalize();
-	void makeMax(Vec3& u);
-	void makeMin(Vec3& u);
+	void makeMax(Vec3 u);
+	void makeMin(Vec3 u);
 
 	//Getters
 	float* ptr();

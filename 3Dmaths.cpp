@@ -14,12 +14,14 @@ Vec3::Vec3(float x=0, float y=0, float z=0){
 	this->z = z;
 }
 
+/*
 //Vec3 copy constructor.
 Vec3::Vec3(const Vec3& other){
 	x = other.x;
 	y = other.y;
 	z = other.z;
 }
+*/
 
 //Vec3 destructor.
 Vec3::~Vec3(){
@@ -27,12 +29,12 @@ Vec3::~Vec3(){
 }
 
 //Vec3 + operator against Vec3.
-Vec3 Vec3::operator+(const Vec3& u){
+Vec3 Vec3::operator+(const Vec3 u){
 	return Vec3(x + u.x, y + u.y, z + u.z);
 }
 
 //Vec3 - operator against Vec3.
-Vec3 Vec3::operator-(const Vec3& u){
+Vec3 Vec3::operator-(const Vec3 u){
 	return Vec3(x - u.x, y - u.y, z - u.z);
 }
 
@@ -47,7 +49,7 @@ Vec3 Vec3::operator/(float s){
 }
 
 //Vec3 == operator againt Vec3.
-bool Vec3::operator==(const Vec3& u){
+bool Vec3::operator==(const Vec3 u){
 	if(x == u.x && y == u.y && z == u.z){
 		return true;
 	}else{
@@ -56,12 +58,12 @@ bool Vec3::operator==(const Vec3& u){
 }
 
 //Vec3 dot product.
-float Vec3::dot(const Vec3& u, const Vec3& v){
+float Vec3::dot(const Vec3 u, const Vec3 v){
 	return u.x * v.x + u.y * v.y + u.z * v.z;
 }
 
 //Vec3 cross product.
-Vec3 Vec3::cross(const Vec3& u, const Vec3& v){
+Vec3 Vec3::cross(const Vec3 u, const Vec3 v){
 	return Vec3(
 		u.y * v.z - u.z * v.y,
 		(-1) * (u.x * v.z - u.z * v.x),
@@ -69,30 +71,30 @@ Vec3 Vec3::cross(const Vec3& u, const Vec3& v){
 }
 
 //Vec3 triple cross product.
-Vec3 Vec3::tripleCross(const Vec3& u, const Vec3& v, const Vec3& w){
+Vec3 Vec3::tripleCross(const Vec3 u, const Vec3 v, const Vec3 w){
 	Vec3 a = Vec3::cross(u, v);
 	return Vec3::cross(a, w);
 }
 
 //Normalize Vec3.
-Vec3 Vec3::normalize(const Vec3& u){
+Vec3 Vec3::normalize(const Vec3 u){
 	float l = sqrt(u.x * u.x + u.y * u.y + u.z * u.z);
 	return Vec3(u.x / l, u.y / l, u.z / l);
 }
 
 //Interpolate between two Vec3s.
-Vec3 Vec3::interpolate(Vec3& u, Vec3& v, float t){
+Vec3 Vec3::interpolate(Vec3 u, Vec3 v, float t){
 	float time = t;
 	if(time > 1){time = 1;}
 	else if(time < 0){time = 0;}
 	return u * (1 - time) + v * time;
 }
 
-Vec3 Vec3::max(const Vec3& u, const Vec3& v){
+Vec3 Vec3::max(const Vec3 u, const Vec3 v){
 	return Vec3(std::max(u.x, v.x), std::max(u.y, v.y), std::max(u.z, v.z));
 }
 
-Vec3 Vec3::min(const Vec3& u, const Vec3& v){
+Vec3 Vec3::min(const Vec3 u, const Vec3 v){
 	return Vec3(std::min(u.x, v.x), std::min(u.y, v.y), std::min(u.z, v.z));
 }
 
@@ -104,13 +106,13 @@ void Vec3::normalize(){
 	z = z / l;
 }
 
-void Vec3::makeMax(Vec3& u){
+void Vec3::makeMax(Vec3 u){
 	x = std::max(x, u.x);
 	y = std::max(y, u.y);
 	z = std::max(z, u.z);
 }
 
-void Vec3::makeMin(Vec3& u){
+void Vec3::makeMin(Vec3 u){
 	x = std::min(x, u.x);
 	y = std::min(y, u.y);
 	z = std::min(z, u.z);
