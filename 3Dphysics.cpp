@@ -352,35 +352,3 @@ AABB BoundingConvex::createBox(){
 	return AABB(min, max);
 }
 
-//------------------------------------------------------------------------------------
-
-//Physics mesh init.
-void PhysicsMesh::init(const char* filename){
-	PhysicsMeshFile file(filename);
-
-	numConvexes = file.numConvexes;
-	
-	vertices = (Vec3*)malloc(file.vertsLength);
-	memcpy(vertices, file.vertices, file.vertsLength);
-
-	indices = (Uint16*)malloc(file.indsLength);
-	memcpy(indices, file.indices, file.indsLength);
-
-	convexes = (BoundingConvex*)malloc(numConvexes * sizeof(BoundingConvex));
-	Uint32 counter = 0;
-	for(unsigned int i=0;i<numConvexes;i++){
-		convexes[i] = BoundingConvex(&vertices[counter], indices[i]);
-		counter += indices[i];
-	}
-}
-
-//Physics mesh destructor.
-PhysicsMesh::~PhysicsMesh(){
-	if(vertices){
-		free(convexes);
-		free(vertices);
-		free(indices);
-	}
-}
-
-//------------------------------------------------------------------------------------------------------

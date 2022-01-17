@@ -1,20 +1,30 @@
 #include "game.hpp"
 
-Uint32 startLayer(Window* window, DeferredTarget* target){
+Uint32 startLayer(Uint32 type, Window* window, DeferredTarget* target){
+	switch(type){
+		case LAYER_TEST:
+			return L_Test(window, target);
+
+		default:
+			return 0;
+	}
+}
+
+Uint32 L_Test(Window* window, DeferredTarget* target){
 	SDL_SetRelativeMouseMode(SDL_TRUE);
+	bool mouseMode = true;
 	CommonUniforms uniform;
-	uniform.init();
+	bool fullscreenMode = false;
 
 	Keyboard kb;
 	kb.init();
 
-	Lighting lights;
-	lights.init(512, 512);
+	LightUniforms lights(512, 512);
 	lights.block.sun.direction = Vec3(1,1,1);
-	lights.block.sun.ambient = Vec3(0.05,0.0,0.05);
-	lights.block.sun.diffuse = Vec3(0.2,0.1,0.5);
+	lights.block.sun.ambient = Vec3(0.01,0.0,0.05);
+	lights.block.sun.diffuse = Vec3(0.1,0.1,0.4);
 	lights.write();
-
+	
 	CollisionHandler physics;
 
 	Player player;
@@ -24,14 +34,6 @@ Uint32 startLayer(Window* window, DeferredTarget* target){
 	level.init("res/castle_level");
 
 	float timer = 0;
-
-	AnimatedModel animModel;
-	animModel.init("res/test_walk_newer.am");
-
-	Animation anim;
-	anim.init("res/test_inflate.ad");
-
-	float animTimer = 0;
 
 	float mouseX = 0;
 	float mouseY = 0;
@@ -66,17 +68,29 @@ Uint32 startLayer(Window* window, DeferredTarget* target){
 
 				case SDL_KEYUP:
 					if(event.key.keysym.scancode == SDL_SCANCODE_F){
-						window->fullscreen(SDL_WINDOW_FULLSCREEN_DESKTOP);
-					}
-					if(event.key.keysym.scancode == SDL_SCANCODE_G){
-						window->fullscreen(0);
+						if(fullscreenMode){
+							fullscreenMode = false;
+							window->fullscreen(0);
+						}else{
+							fullscreenMode = true;
+							window->fullscreen(SDL_WINDOW_FULLSCREEN_DESKTOP);
+						}
 					}
 					if(event.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
 						alive = false;
 					}
 					if(event.key.keysym.scancode == SDL_SCANCODE_R){
 						alive = false;
-						nextLayer = 1;
+						nextLayer = LAYER_TEST;
+					}
+					if(event.key.keysym.scancode == SDL_SCANCODE_M){
+						if(mouseMode){
+							mouseMode = false;
+							SDL_SetRelativeMouseMode(SDL_FALSE);
+						}else{
+							mouseMode = true;
+							SDL_SetRelativeMouseMode(SDL_TRUE);
+						}
 					}
 					break;
 			}
@@ -85,10 +99,6 @@ Uint32 startLayer(Window* window, DeferredTarget* target){
 		//Update -------------------------------------------------------------------------
 		clock.update();
 		float delta = clock.dt;
-
-		animTimer += delta;
-		if(animTimer > anim.duration){animTimer = 0;}
-		animModel.pose(anim, animTimer);
 
 		timer += delta;
 		player.input(delta, kb);
@@ -116,19 +126,17 @@ Uint32 startLayer(Window* window, DeferredTarget* target){
 
 		Spotlight plight;
 		plight.position = player.position + Vec3(0,0,2);
-		plight.radius = 20;
+		plight.radius = 30;
 		plight.direction = player.camera.direction;
 		plight.cutOff = 0.9;
-		plight.ambient = Vec3(0.0,0.0,0.0);
-		plight.diffuse = Vec3(0.0, 0.0, 0.0);
+		plight.ambient = Vec3(0.05,0.0,0.0);
+		plight.diffuse = Vec3(0.5, 0.0, 0.0);
 		lights.push(plight);
 
 		uniform.write();
 		lights.write();
 
 		level.draw();
-
-		animModel.draw(Mat4::identity());
 
 		//Shadows ------------------------------
 		lights.bind();
@@ -153,7 +161,7 @@ Uint32 startLayer(Window* window, DeferredTarget* target){
 
 		level.drawSunShadows();
 		//Display ------------------------------
-		lights.sunCSM.bindTexture(3);
+		lights.sunCSM.bindTexture(SUN_SHADOW_BASE);
 		target->draw();
 
 		target->display(window->width, window->height);

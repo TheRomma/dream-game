@@ -2,7 +2,7 @@
 
 #include "3Dmaths.hpp"
 #include "3Dphysics.hpp"
-#include "model.hpp"
+#include "models.hpp"
 #include "system.hpp"
 #include "graphics.hpp"
 
@@ -47,6 +47,6 @@ struct Level{
 	void draw();
 	void drawSunShadows();
 
-	MultiModel model;
+	StaticModel model;
 	PhysicsMesh mesh;
 };

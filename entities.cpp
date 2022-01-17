@@ -80,5 +80,5 @@ void Level::draw(){
 }
 
 void Level::drawSunShadows(){
-	model.drawSunShadows(Mat4::identity());
+	model.drawShadow(Mat4::identity());
 }

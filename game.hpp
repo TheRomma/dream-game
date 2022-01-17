@@ -4,4 +4,7 @@
 #include "graphics.hpp"
 #include "system.hpp"
 
-Uint32 startLayer(Window* window, DeferredTarget* target);
+#define LAYER_TEST 1
+
+Uint32 startLayer(Uint32 type, Window* window, DeferredTarget* target);
+Uint32 L_Test(Window* window, DeferredTarget* target);

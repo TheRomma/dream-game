@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 
 #include <SDL2/SDL.h>
@@ -8,74 +7,41 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "3Dmaths.hpp"
+#include "shader.hpp"
 
-#define UNIFORM_COMMON_BASE 0
-#define UNIFORM_LIGHTING_BASE 1
+#include <iostream>
 
-#define SUN_SHADOW_BASE 3
-#define SUN_NUM_SHADOW_CASCADES 4
-
-#define MAX_POINTLIGHTS 32
-#define MAX_SPOTLIGHTS 32
-
-//Find and replace (the FIRST OCCURENCE of) a word in a cpp string.
-void findAndReplace(std::string& str, std::string before, std::string after);
-
-//Shader.
-struct Shader{
-	Shader(){};
-	void init(const char* vertexSource, const char* fragmentSource);
-	void init(const char* vertexSource, const char* geometrySource, const char* fragmentSource);
-	~Shader();
-
-	void use();
-
-	private:
-	Uint32 program;
-};
-
-//Vertex buffer.
+//Higher level interface for common vertex buffers.
 struct VertexBuffer{
 	VertexBuffer(){};
-	void init(Uint32 stride, Uint32 length, char* data);
+	void init(Uint32 stride, Uint32 length, float* data);
 	~VertexBuffer();
 
 	void bind();
 	void setAttribute(Uint32 location, Uint32 size);
 
-	Uint32 numVertices;
+	Uint32 numVertices;		//Number of individual vertices.
 
 	private:
-	Uint32 vao, vbo;
-	Uint32 stride;
+	Uint32 vao, vbo;		//Vertex attribute and buffer object handlers.
+	Uint32 stride;			//Length of the stride between vertices.
 	long attribLength;
 };
 
-//2D texture.
-struct Texture{
-	Texture(){};
-	void init(Uint32 width, Uint32 height, Uint32 filter, char* data);
-	~Texture();
+//Higher level interface for common textures.
+struct Material{
+	Material(){};
+	void init(Uint32 width, Uint32 height, Uint32 depth,
+		Uint32 wrap, Uint32 filter, float* diffuse);
+	~Material();
 
 	void bind(Uint32 slot);
 
 	private:
-	Uint32 texture;
+	Uint32 diffTexture;		//Texture object handler.
 };
 
-//Array texture.
-struct ArrayTexture{
-	ArrayTexture(){};
-	void init(Uint32 width, Uint32 height, Uint32 depth, Uint32 filter, char* data);
-	~ArrayTexture();
-
-	void bind(Uint32 slot);
-
-	private:
-	Uint32 texture;
-};
-
-//UBOs & SSBOs etc.
+//Higher level interface for UBOs, SSBOs, etc.
 struct ShaderBuffer{
 	ShaderBuffer(){};
 	void init(Uint32 type, Uint32 base, Uint32 length, char* data);
@@ -86,20 +52,21 @@ struct ShaderBuffer{
 	void bindBase(Uint32 base);
 
 	private:
-	Uint32 buffer, type, base;
+	Uint32 buffer;			//Buffer object handler.
+	Uint32 type;			//Buffer objext type.
+	Uint32 base;			//Buffer object binding.
 };
 
-//Common uniform data.
+//Struct for common uniform data.
 struct CommonBlock{
-	Mat4 projView;
-	Vec3 position;
-	float time;
+	Mat4 projView;		//Combination of view and projection matrices.
+	Vec3 position;		//Position of the theoretical camera.
+	float time;			//Elapsed time.
 };
 
-//Common uniforms.
+//UBO containing common uniforms for drawing.
 struct CommonUniforms{
-	CommonUniforms(){};
-	void init();
+	CommonUniforms();
 	~CommonUniforms(){};
 
 	void bind();
@@ -162,7 +129,7 @@ struct Spotlight{
 };
 
 //Light uniforms.
-struct LightingBlock{
+struct LightBlock{
 	Sun sun;
 	float numPointlights;
 	float numStaticPointlights;
@@ -172,11 +139,10 @@ struct LightingBlock{
 	Spotlight spotlights[MAX_SPOTLIGHTS];
 };
 
-//Light storage.
-struct Lighting{
-	Lighting(){};
-	void init(Uint32 shadowWidth, Uint32 shadowHeight);
-	~Lighting(){};
+//UBO containing light uniforms for light calculations.
+struct LightUniforms{
+	LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight);
+	~LightUniforms(){};
 
 	void bind();
 	void reset();
@@ -186,28 +152,27 @@ struct Lighting{
 	void pushStatic(Pointlight* points, Uint32 numPoints, Spotlight* spots, Uint32 numSpots);
 	void write();
 
-	LightingBlock block;
+	LightBlock block;
 	CSM sunCSM;
 
 	private:
 	ShaderBuffer ubo;
 };
 
-//Deferred shading render target.
 struct DeferredTarget{
-	DeferredTarget(){};
-	void init(Uint32 width, Uint32 height);
+	DeferredTarget(Uint32 width, Uint32 height);
 	~DeferredTarget();
 
 	void bind();
-	void bindFinal();
+	void bindDisplay();
 	void draw();
-	void display(Uint32 displayWidth, Uint32 displayHeight);
+	void display(Uint32 width, Uint32 height);
 
 	Uint32 width, height;
 
 	private:
-	Uint32 gBuffer, gPosition, gNormal, gAlbedo, depthStencil, finalBuffer, finalImage;
+	Uint32 gBuffer, gPosition, gNormal, gAlbedo, depthStencil;
+	Uint32 displayBuffer, displayImage;
 	Shader deferredProgram, displayProgram;
 	VertexBuffer buffer;
 };

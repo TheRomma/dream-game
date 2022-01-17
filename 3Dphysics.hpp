@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "3Dmaths.hpp"
-#include "resources.hpp"
+#include "loaders.hpp"
 
 #define GJK_MAX_ITER 10
 #define EPA_MAX_ITER 10
@@ -45,18 +45,6 @@ struct BoundingConvex{
 
 	Vec3* vertices;
 	unsigned int numVertices;
-};
-
-//Physics mesh
-struct PhysicsMesh{
-	PhysicsMesh(){};	
-	void init(const char* filename);
-	~PhysicsMesh();	
-
-	Uint32 numConvexes;
-	Vec3* vertices = nullptr;
-	Uint16* indices;
-	BoundingConvex* convexes;
 };
 
 //GJK Simplex
