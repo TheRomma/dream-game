@@ -340,7 +340,7 @@ std::string glsl_deferredStaticModelVertex(){
 }
 
 //Fragment shader program for static models.
-std::string glsl_deferredStaticModelFragment(){
+std::string glsl_deferredAllModelFragment(){
 	std::string str = R"(
 		layout(location = 0) out vec4 gPosition;
 		layout(location = 1) out vec3 gNormal;
@@ -360,6 +360,120 @@ std::string glsl_deferredStaticModelFragment(){
 			gAlbedo = texture(u_diffuse, F.uv_coord).rgb;
 		}
 	)";	
+	return str;
+}
+
+std::string glsl_staticModelShadowVertex(){
+	std::string str = R"(
+	layout(location = 0) in vec3 POSITION;
+
+	layout(location = 0) uniform mat4 u_model;
+
+	void main(){
+		gl_Position = u_model * vec4(POSITION, 1.0);
+	}
+	)";	
+	return str;
+}
+
+std::string glsl_allModelShadowGeometry(){
+	std::string str = R"(
+	#define NUM_CASCADES NUM_SHADOWS
+
+	layout(triangles, invocations = NUM_CASCADES) in;
+	layout(triangle_strip, max_vertices = 3) out;
+	
+	void main(){
+		for(unsigned int i=0;i<NUM_CASCADES;i++){
+			gl_Position = 
+				sun.view[gl_InvocationID] * gl_in[i].gl_Position;
+			gl_Layer = gl_InvocationID;
+			EmitVertex();
+		}
+		EndPrimitive();
+	}
+	)";	
+	str.replace(
+		str.find("NUM_SHADOWS"),
+		std::string("NUM_SHADOWS").length(),
+		std::to_string(SUN_NUM_SHADOW_CASCADES)
+	);
+	return str;
+}
+
+//------------------------------------------------------------------------------------------------------
+
+//Vertex shader program for animated models.
+std::string glsl_deferredAnimatedModelVertex(Uint32 numBones){
+	std::string str = R"(
+		layout(location = 0) in vec3 POSITION;
+		layout(location = 1) in vec3 UV_COORD;
+		layout(location = 2) in vec3 NORMAL;
+		layout(location = 3) in vec4 BONES;
+		layout(location = 4) in vec4 WEIGHTS;
+
+		out VS_OUT{
+			vec4 position;
+			vec3 uv_coord;
+			vec3 normal;
+		} F;
+
+		layout(location = 0) uniform mat4 u_model;
+		layout(location = 1) uniform mat4 u_joints[NUM_BONES];
+
+		void main(){
+			vec4 transform = u_model * (
+				u_joints[int(BONES.r)] * vec4(POSITION, 1.0) * WEIGHTS.r +
+				u_joints[int(BONES.g)] * vec4(POSITION, 1.0) * WEIGHTS.g +
+				u_joints[int(BONES.b)] * vec4(POSITION, 1.0) * WEIGHTS.b +
+				u_joints[int(BONES.a)] * vec4(POSITION, 1.0) * WEIGHTS.a
+			);
+			vec4 result = projView * transform;
+			gl_Position = result;
+
+			F.position = vec4(transform.rgb, result.z);
+			F.uv_coord = UV_COORD;
+			F.normal = normalize(mat3(transpose(inverse(u_model))) * (
+				mat3(transpose(inverse(u_joints[int(BONES.r)]))) * NORMAL.xyz * WEIGHTS.r +
+				mat3(transpose(inverse(u_joints[int(BONES.g)]))) * NORMAL.xyz * WEIGHTS.g +
+				mat3(transpose(inverse(u_joints[int(BONES.b)]))) * NORMAL.xyz * WEIGHTS.b +
+				mat3(transpose(inverse(u_joints[int(BONES.a)]))) * NORMAL.xyz * WEIGHTS.a
+			));
+		}
+	)";	
+	str.replace(
+		str.find("NUM_BONES"),
+		std::string("NUM_BONES").length(),
+		std::to_string(numBones)
+	);
+	return str;
+}
+
+std::string glsl_animatedModelShadowVertex(Uint32 numBones){
+	std::string str = R"(
+	layout(location = 0) in vec3 POSITION;
+	layout(location = 1) in vec3 UV_COORD;
+	layout(location = 2) in vec3 NORMAL;
+	layout(location = 3) in vec4 BONES;
+	layout(location = 4) in vec4 WEIGHTS;
+
+	layout(location = 0) uniform mat4 u_model;
+	layout(location = 1) uniform mat4 u_joints[NUM_BONES];
+
+	void main(){
+		gl_Position = u_model * (
+			u_joints[int(BONES.r)] * vec4(POSITION, 1.0) * WEIGHTS.r +
+			u_joints[int(BONES.g)] * vec4(POSITION, 1.0) * WEIGHTS.g +
+			u_joints[int(BONES.b)] * vec4(POSITION, 1.0) * WEIGHTS.b +
+			u_joints[int(BONES.a)] * vec4(POSITION, 1.0) * WEIGHTS.a
+		);
+	}
+	)";	
+	str.replace(
+		str.find("NUM_BONES"),
+		std::string("NUM_BONES").length(),
+		std::to_string(numBones)
+	);
 	return str;
 }
 
@@ -402,45 +516,6 @@ std::string glsl_displayQuadFragment(){
 	return str;
 }
 
-std::string glsl_staticModelShadowVertex(){
-	std::string str = R"(
-	layout(location = 0) in vec3 POSITION;
-
-	layout(location = 0) uniform mat4 u_model;
-
-	void main(){
-		gl_Position = u_model * vec4(POSITION, 1.0);
-	}
-	)";	
-	return str;
-}
-
-std::string glsl_staticModelShadowGeometry(){
-	std::string str = R"(
-	#define NUM_CASCADES NUM_SHADOWS
-
-	layout(triangles, invocations = NUM_CASCADES) in;
-	layout(triangle_strip, max_vertices = 3) out;
-	
-	void main(){
-		for(unsigned int i=0;i<NUM_CASCADES;i++){
-			gl_Position = 
-				sun.view[gl_InvocationID] * gl_in[i].gl_Position;
-			gl_Layer = gl_InvocationID;
-			EmitVertex();
-		}
-		EndPrimitive();
-	}
-	)";	
-	str.replace(
-		str.find("NUM_SHADOWS"),
-		std::string("NUM_SHADOWS").length(),
-		std::to_string(SUN_NUM_SHADOW_CASCADES)
-	);
-	return str;
-}
-
-
 //-----------------------------------------------------------------------------------------------------
 
 //Shaders for calculating light data.
@@ -465,7 +540,7 @@ std::string glsl_deferredLightPassFragment(){
 			vec3 position = texture(u_position, F.uv_coord).rgb;
 			vec3 normal = texture(u_normal, F.uv_coord).rgb;
 			vec3 albedo = texture(u_albedo, F.uv_coord).rgb;
-			float distance = texture(u_normal, F.uv_coord).a;
+			float distance = texture(u_position, F.uv_coord).a;
 			vec3 result = vec3(0.0);
 			if(distance < FOG_DISTANCE){
 				result += calcSunlight(sun, position, normal, albedo, 4, u_sunShadow);

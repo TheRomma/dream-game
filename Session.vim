@@ -1422,13 +1422,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 112 - ((45 * winheight(0) + 25) / 51)
+let s:l = 177 - ((32 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-112
-normal! 0
+177
+normal! 042|
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
 tabnext
@@ -1697,14 +1698,13 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 307 - ((15 * winheight(0) + 25) / 51)
+let s:l = 372 - ((41 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-307
+372
 normal! 0
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
 tabnext
@@ -1844,12 +1844,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 44 - ((19 * winheight(0) + 25) / 51)
+let s:l = 60 - ((29 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-44
-normal! 028|
+60
+normal! 020|
 wincmd w
 argglobal
 if bufexists("shader.cpp") | buffer shader.cpp | else | edit shader.cpp | endif
@@ -1973,12 +1973,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 235 - ((32 * winheight(0) + 25) / 51)
+let s:l = 465 - ((42 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-235
-normal! 012|
+465
+normal! 013|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
@@ -2248,11 +2248,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 46 - ((45 * winheight(0) + 25) / 51)
+let s:l = 105 - ((20 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-46
+105
 normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 84 + 105) / 211)
@@ -2394,12 +2394,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 17 - ((16 * winheight(0) + 25) / 51)
+let s:l = 46 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-17
-normal! 034|
+46
+normal! 0
 wincmd w
 argglobal
 if bufexists("models.cpp") | buffer models.cpp | else | edit models.cpp | endif
@@ -2523,12 +2523,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 36 - ((29 * winheight(0) + 25) / 51)
+let s:l = 129 - ((5 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-36
-normal! 0
+129
+normal! 022|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
@@ -2807,7 +2807,7 @@ normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 7
+tabnext 6
 set stal=1
 badd +1 makefile
 badd +1 main.cpp
@@ -2817,20 +2817,20 @@ badd +1 entities.hpp
 badd +1 game.hpp
 badd +1 graphics.hpp
 badd +1 shader.hpp
-badd +0 renderTarget.hpp
 badd +1 loaders.hpp
 badd +1 models.hpp
 badd +1 system.hpp
 badd +192 3Dmaths.cpp
 badd +366 3Dphysics.cpp
 badd +46 entities.cpp
-badd +0 game.cpp
+badd +1 game.cpp
 badd +1 graphics.cpp
 badd +1 shader.cpp
-badd +0 renderTarget.cpp
 badd +1 loaders.cpp
 badd +1 models.cpp
 badd +1 system.cpp
+badd +1 renderTarget.hpp
+badd +1 renderTarget.cpp
 badd +2 renderer.hpp
 badd +2 renderer.cpp
 badd +46 resources.hpp
@@ -2854,7 +2854,6 @@ if file_readable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &so = s:so_save | let &siso = s:siso_save
-nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :

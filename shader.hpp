@@ -54,10 +54,15 @@ std::string glsl_lightCalculations();
 
 //Shader program for static models.
 std::string glsl_deferredStaticModelVertex();
-std::string glsl_deferredStaticModelFragment();
+std::string glsl_deferredAllModelFragment();
 
 std::string glsl_staticModelShadowVertex();
-std::string glsl_staticModelShadowGeometry();
+std::string glsl_allModelShadowGeometry();
+
+//Shader program for animated models.
+std::string glsl_deferredAnimatedModelVertex(Uint32 numBones);
+
+std::string glsl_animatedModelShadowVertex(Uint32 numBones);
 
 //Simple shaders for drawing a screen sized quad.
 std::string glsl_displayQuadVertex();
