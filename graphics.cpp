@@ -320,7 +320,7 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 
 	displayProgram.init(
 		(glsl_header() + glsl_displayQuadVertex()).c_str(),
-		(glsl_header() + glsl_displayQuadFragment()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_displayQuadFragment()).c_str()
 	);
 
 	//Setup vertex buffer.

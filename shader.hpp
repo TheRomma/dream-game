@@ -49,9 +49,6 @@ std::string glsl_commonUniforms();
 //Common light structs and ubo in glsl.
 std::string glsl_commonLightStructs();
 
-//Common lights calculations in glsl.
-std::string glsl_lightCalculations();
-
 //Shader program for static models.
 std::string glsl_deferredStaticModelVertex();
 std::string glsl_deferredAllModelFragment();
@@ -67,6 +64,9 @@ std::string glsl_animatedModelShadowVertex(Uint32 numBones);
 //Simple shaders for drawing a screen sized quad.
 std::string glsl_displayQuadVertex();
 std::string glsl_displayQuadFragment();
+
+//Common lights calculations in glsl.
+std::string glsl_lightCalculations();
 
 //Shaders for calculating light data.
 std::string glsl_deferredLightPassFragment();

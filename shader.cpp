@@ -207,122 +207,6 @@ std::string glsl_commonLightStructs(){
 	return str;
 }
 
-//------------------------------------------------------------------------------------------------
-
-//Contains various light calculation functions in glsl. Requires commonLightStructs.
-std::string glsl_lightCalculations(){
-	std::string str = R"(
-		float calcPCF(int mapIndex, vec3 projectedPos, float currentDepth, sampler2DArray shadowMap){
-			float shadow = 0.0;
-			float pcfDepth = 0.0;
-			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
-
-			for(int i=-1;i<=1;i++){
-				for(int j=-1;j<=1;j++){
-					pcfDepth = texture(shadowMap, vec3((projectedPos.xy + vec2(i,j) * texelSize), float(mapIndex))).r;
-					shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
-				}
-			}
-
-			return shadow / 9;
-		}
-
-		float calcSunShadow(Sun light, vec3 position, int numShadowCascades, sampler2DArray shadowMap){
-			int mapIndex = numShadowCascades - 1;
-			vec3 pos = posTime.rgb;
-			float distance = length(position - pos);
-
-			if(distance < 8){mapIndex = 0;}
-			else if(distance < 16){mapIndex = 1;}
-			else if(distance < 32){mapIndex = 2;}
-
-			vec4 lightSpaceFrag = light.view[mapIndex] * vec4(position.rgb, 1.0);
-			vec3 projPos = lightSpaceFrag.xyz / lightSpaceFrag.w;
-			if(projPos.z > 1.0){return 0.0;}
-			projPos = projPos * 0.5 + 0.5;
-			float currentDepth = projPos.z;
-			
-			float shadow = 0.0;
-			float pcfDepth = 0.0;
-			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
-
-			return calcPCF(mapIndex, projPos, currentDepth, shadowMap);
-		}
-
-		vec3 calcSunlight(Sun light, vec3 position, vec3 normal, vec3 albedo,
-			int numShadowCascades, sampler2DArray shadowMap
-		){
-			if(light.diffuse == vec3(0.0, 0.0, 0.0)){
-				return light.ambient * albedo;
-			}
-
-			vec3 direction = normalize(light.direction);
-
-			float diffRatio = max(dot(normal, direction), 0.0);
-
-			vec3 ambient = light.ambient * albedo;
-			if(diffRatio <= 0){
-				return ambient;
-			}
-
-			vec3 diffuse = light.diffuse * diffRatio * albedo;
-
-			float shadow = calcSunShadow(sun, position.rgb, numShadowCascades, shadowMap);
-
-			return ambient + (1.0 - shadow) * diffuse;
-		}
-
-		vec3 calcPointlight(Pointlight light, vec3 position, vec3 normal, vec3 albedo){
-			vec3 ab = light.position.rgb - position.rgb;
-			float distSquare = dot(ab, ab);
-
-			if(distSquare > light.position.a * light.position.a){
-				return vec3(0.0);
-			}
-
-			vec3 direction = normalize(ab);
-			float diffRatio = max(dot(normal, direction), 0.0);
-			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
-
-			vec3 ambient = light.ambient * albedo * attenuation;
-			vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
-
-			return ambient + diffuse;
-		}
-
-		vec3 calcSpotlight(Spotlight light, vec3 position, vec3 normal, vec3 albedo){
-			vec3 ab = light.position.rgb - position.rgb;
-			float distSquare = dot(ab, ab);
-
-			if(distSquare > light.position.a * light.position.a){
-				return vec3(0.0);
-			}
-
-			vec3 direction = normalize(ab);
-			float diffRatio = max(dot(normal, direction), 0.0);
-			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
-
-			vec3 ambient = light.ambient * albedo * attenuation;
-			
-			float theta = dot(direction, normalize(-light.direction.rgb));
-			if(theta > cos(light.direction.a)){
-				vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
-				return ambient + diffuse;
-			}else{
-				return ambient;
-			}
-		}
-
-		vec3 toneMapping(vec3 color, float gamma, float exposure){
-			vec3 toned = vec3(1.0) - exp(-color * exposure);
-			toned = pow(toned, vec3(1.0 / gamma));
-
-			return toned;
-		}
-	)";
-	return str;
-}
-
 //------------------------------------------------------------------------------------------------------
 
 //Vertex shader program for static models.
@@ -527,8 +411,193 @@ std::string glsl_displayQuadFragment(){
 
 		void main(){
 			outColor = texture(u_image, F.uv_coord);
+			//outColor = texture(u_image, vec2((F.uv_coord.x + cos(posTime.a + F.uv_coord.y * 10) * 0.02) * 0.96 + 0.02, F.uv_coord.y));
 		}
 	)";	
+	return str;
+}
+
+//------------------------------------------------------------------------------------------------
+
+//Contains various light calculation functions in glsl. Requires commonLightStructs.
+std::string glsl_lightCalculations(){
+	std::string str = R"(
+		#define PI 3.14
+
+		float distributionGGX(vec3 N, vec3 H, float roughness){
+			float a = roughness * roughness;
+			float a2 = a * a;
+			float NdotH = max(dot(N, H), 0.0);
+			float NdotH2 = NdotH * NdotH;
+
+			float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+			denom = PI * denom * denom;
+
+			return a2 / denom;
+		}
+
+		float geometrySchlickGGX(float NdotV, float roughness){
+			float r = (roughness + 1.0);
+			float k = (r * r) / 8.0;
+
+			float denom = NdotV * (1.0 - k) + k;
+
+			return NdotV / denom;
+		}
+
+		float geometrySmith(float NdotV, float NdotL, float roughness){
+			float ggx1 = geometrySchlickGGX(NdotV, roughness);
+			float ggx2 = geometrySchlickGGX(NdotL, roughness);
+
+			return ggx1 * ggx2;
+		}
+
+		vec3 fresnelSchlick(float cosTheta, vec3 F0){
+			return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+		}
+
+		vec3 calcBRDF(vec3 albedo, vec3 radiance, vec3 N, vec3 V, vec3 L, vec3 F0, vec2 metalRough){
+			vec3 H = normalize(V + L);
+
+			float NdotL = max(dot(N, V), 0.0);
+			float NdotV = max(dot(N, L), 0.0);
+
+			float NDF = distributionGGX(N, H, metalRough.g);
+			float G = geometrySmith(NdotV, NdotL, metalRough.g);
+			vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+			vec3 kS = F;
+			vec3 kD = vec3(1.0) - kS;
+			kD *= 1.0 - metalRough.r;
+
+			vec3 num = NDF * G * F;
+			float denom = 4.0 * NdotV * NdotL + 0.0001;
+			vec3 specular = num / denom;
+
+			return (kD * albedo / PI + specular) * radiance * NdotL;
+		}
+
+		float calcPCF(int mapIndex, vec3 projectedPos, float currentDepth, sampler2DArray shadowMap){
+			float shadow = 0.0;
+			float pcfDepth = 0.0;
+			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
+
+			for(int i=-1;i<=1;i++){
+				for(int j=-1;j<=1;j++){
+					pcfDepth = texture(shadowMap, vec3((projectedPos.xy + vec2(i,j) * texelSize), float(mapIndex))).r;
+					shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+				}
+			}
+
+			return shadow / 9;
+		}
+
+		float calcSunShadow(Sun light, vec3 position, int numShadowCascades, sampler2DArray shadowMap){
+			int mapIndex = numShadowCascades - 1;
+			vec3 pos = posTime.rgb;
+			float distance = length(position - pos);
+
+			if(distance < 8){mapIndex = 0;}
+			else if(distance < 16){mapIndex = 1;}
+			else if(distance < 32){mapIndex = 2;}
+
+			vec4 lightSpaceFrag = light.view[mapIndex] * vec4(position.rgb, 1.0);
+			vec3 projPos = lightSpaceFrag.xyz / lightSpaceFrag.w;
+			if(projPos.z > 1.0){return 0.0;}
+			projPos = projPos * 0.5 + 0.5;
+			float currentDepth = projPos.z;
+			
+			float shadow = 0.0;
+			float pcfDepth = 0.0;
+			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
+
+			return calcPCF(mapIndex, projPos, currentDepth, shadowMap);
+		}
+
+		vec3 calcSunlight(Sun light, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough,
+			int numShadowCascades, sampler2DArray shadowMap
+		){
+			vec3 radiance = vec3(0.0);
+
+			vec3 direction = normalize(light.direction);
+
+			if(light.diffuse == vec3(0.0, 0.0, 0.0)){
+				radiance = light.ambient * albedo;
+				return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+			}
+
+			float diffRatio = max(dot(normal, direction), 0.0);
+
+			vec3 ambient = light.ambient * albedo;
+			if(diffRatio <= 0){
+				radiance = ambient;
+				return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+			}
+
+			vec3 diffuse = light.diffuse * diffRatio * albedo;
+
+			float shadow = calcSunShadow(sun, position.rgb, numShadowCascades, shadowMap);
+
+			radiance = ambient + (1.0 - shadow) * diffuse;
+
+			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+		}
+
+		vec3 calcPointlight(Pointlight light, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough){
+			vec3 ab = light.position.rgb - position.rgb;
+			float distSquare = dot(ab, ab);
+
+			if(distSquare > light.position.a * light.position.a){
+				return vec3(0.0);
+			}
+
+			vec3 direction = normalize(ab);
+
+			float diffRatio = max(dot(normal, direction), 0.0);
+			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
+
+			vec3 ambient = light.ambient * albedo * attenuation;
+			vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
+
+			vec3 radiance = ambient + diffuse;
+
+			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+		}
+
+		vec3 calcSpotlight(Spotlight light, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough){
+			vec3 ab = light.position.rgb - position.rgb;
+			float distSquare = dot(ab, ab);
+
+			if(distSquare > light.position.a * light.position.a){
+				return vec3(0.0);
+			}
+
+			vec3 direction = normalize(ab);
+
+			float diffRatio = max(dot(normal, direction), 0.0);
+			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
+
+			vec3 ambient = light.ambient * albedo * attenuation;
+
+			vec3 radiance = vec3(0.0);
+			
+			float theta = dot(direction, normalize(-light.direction.rgb));
+			if(theta > cos(light.direction.a)){
+				vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
+				radiance = ambient + diffuse;
+			}else{
+				radiance = ambient;
+			}
+			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+		}
+
+		vec3 toneMapping(vec3 color, float gamma, float exposure){
+			vec3 toned = vec3(1.0) - exp(-color * exposure);
+			toned = pow(toned, vec3(1.0 / gamma));
+
+			return toned;
+		}
+	)";
 	return str;
 }
 
@@ -538,6 +607,7 @@ std::string glsl_displayQuadFragment(){
 std::string glsl_deferredLightPassFragment(){
 	std::string str = R"(
 	#define FOG_DISTANCE 80
+	#define NUM_SUN_CASCADES 4
 
 	out vec4 outColor;
 
@@ -551,29 +621,53 @@ std::string glsl_deferredLightPassFragment(){
 	layout(binding = SUN_SHADOW_BASE) uniform sampler2DArray u_sunShadow;
 
 	void main(){
-		vec3 normal = texture(u_normal, F.uv_coord).rgb;
-		if(normal != vec3(0.0, 0.0, 0.0)){
+
+		vec4 normal = texture(u_normal, F.uv_coord).rgba;
+		if(normal.rgb != vec3(0.0, 0.0, 0.0)){
+
 			vec4 position = texture(u_position, F.uv_coord).rgba;
-			vec3 normal = texture(u_normal, F.uv_coord).rgb;
-			vec3 albedo = texture(u_albedo, F.uv_coord).rgb;
+			vec4 albedo = texture(u_albedo, F.uv_coord).rgba;
+			float distance = position.a;
+			vec2 metalRough = vec2(albedo.a, normal.a);
+
 			vec3 result = vec3(0.0);
 			if(position.a < FOG_DISTANCE){
-				result += calcSunlight(sun, position.rgb, normal, albedo, 4, u_sunShadow);
+
+				vec3 V = normalize(posTime.rgb - position.rgb);
+
+				vec3 F0 = vec3(0.04);
+				F0 = mix(F0, albedo.rgb, metalRough.r);
+
+				//Sunlight
+				result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_sunShadow);
+
+				//Pointlights
 				for(unsigned int i=0;i<numLights.r;i++){
-					result += calcPointlight(pointlights[i], position.rgb, normal, albedo);
+					result += calcPointlight(pointlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
 				}
+
+				//Spotlights
 				for(unsigned int i=0;i<numLights.b;i++){
-					result += calcSpotlight(spotlights[i], position.rgb, normal, albedo);
+					result += calcSpotlight(spotlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
 				}
+				
+				//Fog
 				float fogRatio = position.a / FOG_DISTANCE;
 				result = result * (1 - fogRatio) + sun.ambient * fogRatio;
+
 			}else{
+
 				result = sun.ambient;
+
 			}
+
 			outColor = vec4(toneMapping(result, 1.0, 1.0), 1.0);
+
 		}else{
+
 			outColor = vec4(sun.ambient, 1.0);
 			//discard;
+
 		}
 	}
 	)";	

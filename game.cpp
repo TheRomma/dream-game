@@ -21,14 +21,14 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 	LightUniforms lights(512, 512);
 	lights.block.sun.direction = Vec3(1,1,1);
-	lights.block.sun.ambient = Vec3(0.01,0.0,0.05);
-	lights.block.sun.diffuse = Vec3(0.1,0.1,0.4);
+	lights.block.sun.ambient = Vec3(0.02,0.02,0.1);
+	lights.block.sun.diffuse = Vec3(2.0,2.0,8.0);
 	lights.write();
 	
 	CollisionHandler physics;
 
 	Player player;
-	player.init(Vec3(0,9,5), -1.57);
+	player.init(Vec3(0,9,0), -1.57);
 
 	Level level;
 	level.init("res/castle_level");
@@ -142,8 +142,8 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		plight.radius = 30;
 		plight.direction = player.camera.direction;
 		plight.cutOff = 0.9;
-		plight.ambient = Vec3(0.05,0.0,0.0);
-		plight.diffuse = Vec3(0.5, 0.0, 0.0);
+		plight.ambient = Vec3(0.5,0.0,0.0);
+		plight.diffuse = Vec3(5.0, 0.0, 0.0);
 		lights.push(plight);
 
 		uniform.write();
