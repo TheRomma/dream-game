@@ -42,11 +42,21 @@ void VertexBuffer::setAttribute(Uint32 location, Uint32 size){
 //-------------------------------------------------------------------------------------------
 
 //Create a common material.
-void Material::init(Uint32 width, Uint32 height, Uint32 depth, Uint32 wrap, Uint32 filter, float* diffuse){
-	glGenTextures(1, &diffTexture);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, diffTexture);
+void Material::init(Uint32 width, Uint32 height, Uint32 depth, Uint32 wrap,
+		Uint32 filter, float* diffSource, float* metalRoughSource){
 
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, width, height, depth, false, GL_RGBA, GL_FLOAT, diffuse);
+	glGenTextures(1, &diffuse);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, width, height, depth, false, GL_RGBA, GL_FLOAT, diffSource);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, wrap);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, wrap);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, filter);
+
+	glGenTextures(1, &metalRough);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RG32F, 1, 1, depth, false, GL_RG, GL_FLOAT, metalRoughSource);
 
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, wrap);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, wrap);
@@ -56,15 +66,18 @@ void Material::init(Uint32 width, Uint32 height, Uint32 depth, Uint32 wrap, Uint
 
 //Destructor for materials..
 Material::~Material(){
-	if(diffTexture){
-		glDeleteTextures(1, &diffTexture);
+	if(diffuse){
+		glDeleteTextures(1, &diffuse);
+		glDeleteTextures(1, &metalRough);
 	}
 }
 
 //Bind materials.
 void Material::bind(Uint32 slot){
 	glActiveTexture(GL_TEXTURE0 + slot);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, diffTexture);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
+	glActiveTexture(GL_TEXTURE1 + slot);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
 }
 //------------------------------------------------------------------------
 
@@ -249,7 +262,7 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-	//Position data.
+	//Position and distance data.
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -257,18 +270,18 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
-	//Normal data.
+	//Normal and roughness data.
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
-	//Albedo data.
+	//Albedo and metalic data.
 	glGenTextures(1, &gAlbedo);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);

@@ -165,7 +165,7 @@ std::string glsl_commonLightStructs(){
 		};
 
 		struct Pointlight{
-			vec4 position;
+			vec4 position;//vec3 position, float radius
 			vec3 ambient;
 			vec3 diffuse;
 		};
@@ -267,16 +267,20 @@ std::string glsl_lightCalculations(){
 
 			vec3 diffuse = light.diffuse * diffRatio * albedo;
 
-			float shadow = calcSunShadow(sun, position, numShadowCascades, shadowMap);
+			float shadow = calcSunShadow(sun, position.rgb, numShadowCascades, shadowMap);
 
 			return ambient + (1.0 - shadow) * diffuse;
 		}
 
 		vec3 calcPointlight(Pointlight light, vec3 position, vec3 normal, vec3 albedo){
-			vec3 ab = light.position.rgb - position;
-			vec3 direction = normalize(ab);
+			vec3 ab = light.position.rgb - position.rgb;
 			float distSquare = dot(ab, ab);
 
+			if(distSquare > light.position.a * light.position.a){
+				return vec3(0.0);
+			}
+
+			vec3 direction = normalize(ab);
 			float diffRatio = max(dot(normal, direction), 0.0);
 			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
 
@@ -287,11 +291,14 @@ std::string glsl_lightCalculations(){
 		}
 
 		vec3 calcSpotlight(Spotlight light, vec3 position, vec3 normal, vec3 albedo){
-			vec3 ab = light.position.rgb - position;
-			vec3 direction = normalize(ab);
-
+			vec3 ab = light.position.rgb - position.rgb;
 			float distSquare = dot(ab, ab);
 
+			if(distSquare > light.position.a * light.position.a){
+				return vec3(0.0);
+			}
+
+			vec3 direction = normalize(ab);
 			float diffRatio = max(dot(normal, direction), 0.0);
 			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
 
@@ -304,6 +311,13 @@ std::string glsl_lightCalculations(){
 			}else{
 				return ambient;
 			}
+		}
+
+		vec3 toneMapping(vec3 color, float gamma, float exposure){
+			vec3 toned = vec3(1.0) - exp(-color * exposure);
+			toned = pow(toned, vec3(1.0 / gamma));
+
+			return toned;
 		}
 	)";
 	return str;
@@ -343,8 +357,8 @@ std::string glsl_deferredStaticModelVertex(){
 std::string glsl_deferredAllModelFragment(){
 	std::string str = R"(
 		layout(location = 0) out vec4 gPosition;
-		layout(location = 1) out vec3 gNormal;
-		layout(location = 2) out vec3 gAlbedo;
+		layout(location = 1) out vec4 gNormal;
+		layout(location = 2) out vec4 gAlbedo;
 
 		in VS_OUT{
 			vec4 position;
@@ -353,11 +367,13 @@ std::string glsl_deferredAllModelFragment(){
 		}F;
 
 		layout(binding = 0) uniform sampler2DArray u_diffuse;
+		layout(binding = 1) uniform sampler2DArray u_metalRough;
 
 		void main(){
 			gPosition = F.position;
-			gNormal = normalize(F.normal);
-			gAlbedo = texture(u_diffuse, F.uv_coord).rgb;
+			vec2 metalRough = texture(u_metalRough, F.uv_coord).rg;
+			gNormal = vec4(normalize(F.normal), metalRough.g);
+			gAlbedo = vec4(texture(u_diffuse, F.uv_coord).rgb, metalRough.r);
 		}
 	)";	
 	return str;
@@ -537,28 +553,24 @@ std::string glsl_deferredLightPassFragment(){
 	void main(){
 		vec3 normal = texture(u_normal, F.uv_coord).rgb;
 		if(normal != vec3(0.0, 0.0, 0.0)){
-			vec3 position = texture(u_position, F.uv_coord).rgb;
+			vec4 position = texture(u_position, F.uv_coord).rgba;
 			vec3 normal = texture(u_normal, F.uv_coord).rgb;
 			vec3 albedo = texture(u_albedo, F.uv_coord).rgb;
-			float distance = texture(u_position, F.uv_coord).a;
 			vec3 result = vec3(0.0);
-			if(distance < FOG_DISTANCE){
-				result += calcSunlight(sun, position, normal, albedo, 4, u_sunShadow);
+			if(position.a < FOG_DISTANCE){
+				result += calcSunlight(sun, position.rgb, normal, albedo, 4, u_sunShadow);
 				for(unsigned int i=0;i<numLights.r;i++){
-					result += calcPointlight(pointlights[i], position, normal, albedo);
+					result += calcPointlight(pointlights[i], position.rgb, normal, albedo);
 				}
 				for(unsigned int i=0;i<numLights.b;i++){
-					result += calcSpotlight(spotlights[i], position, normal, albedo);
+					result += calcSpotlight(spotlights[i], position.rgb, normal, albedo);
 				}
-				float fogRatio = distance / FOG_DISTANCE;
+				float fogRatio = position.a / FOG_DISTANCE;
 				result = result * (1 - fogRatio) + sun.ambient * fogRatio;
 			}else{
 				result = sun.ambient;
 			}
-			float gamma = 1.0;
-			result = result / (result + vec3(1.0));
-			result = pow(result, vec3(1.0 / gamma));
-			outColor = vec4(result, 1.0);
+			outColor = vec4(toneMapping(result, 1.0, 1.0), 1.0);
 		}else{
 			outColor = vec4(sun.ambient, 1.0);
 			//discard;

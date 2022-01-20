@@ -1147,12 +1147,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 83 - ((37 * winheight(0) + 25) / 51)
+let s:l = 74 - ((28 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-83
-normal! 020|
+74
+normal! 030|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 87 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 123 + 105) / 211)
@@ -1422,14 +1422,13 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 177 - ((32 * winheight(0) + 25) / 51)
+let s:l = 177 - ((38 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 177
-normal! 042|
+normal! 045|
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
 tabnext
@@ -1569,12 +1568,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 12 - ((11 * winheight(0) + 25) / 51)
+let s:l = 35 - ((19 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-12
-normal! 018|
+35
+normal! 04|
 wincmd w
 argglobal
 if bufexists("graphics.cpp") | buffer graphics.cpp | else | edit graphics.cpp | endif
@@ -1698,12 +1697,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 372 - ((41 * winheight(0) + 25) / 51)
+let s:l = 265 - ((8 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-372
-normal! 0
+265
+normal! 028|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
@@ -1844,7 +1843,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 60 - ((29 * winheight(0) + 25) / 51)
+let s:l = 60 - ((26 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -1973,13 +1972,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 465 - ((42 * winheight(0) + 25) / 51)
+let s:l = 573 - ((27 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-465
-normal! 013|
+573
+normal! 055|
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
 tabnext
@@ -2119,12 +2119,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 42 - ((26 * winheight(0) + 25) / 51)
+let s:l = 45 - ((32 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-42
-normal! 06|
+45
+normal! 05|
 wincmd w
 argglobal
 if bufexists("loaders.cpp") | buffer loaders.cpp | else | edit loaders.cpp | endif
@@ -2248,12 +2248,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 105 - ((20 * winheight(0) + 25) / 51)
+let s:l = 63 - ((17 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-105
-normal! 0
+63
+normal! 05|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 84 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 126 + 105) / 211)
@@ -2523,12 +2523,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 129 - ((5 * winheight(0) + 25) / 51)
+let s:l = 64 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-129
-normal! 022|
+64
+normal! 052|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
@@ -2807,7 +2807,7 @@ normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 6
+tabnext 8
 set stal=1
 badd +1 makefile
 badd +1 main.cpp
@@ -2823,7 +2823,7 @@ badd +1 system.hpp
 badd +192 3Dmaths.cpp
 badd +366 3Dphysics.cpp
 badd +46 entities.cpp
-badd +1 game.cpp
+badd +0 game.cpp
 badd +1 graphics.cpp
 badd +1 shader.cpp
 badd +1 loaders.cpp
@@ -2854,6 +2854,7 @@ if file_readable(s:sx)
   exe "source " . fnameescape(s:sx)
 endif
 let &so = s:so_save | let &siso = s:siso_save
+nohlsearch
 doautoall SessionLoadPost
 unlet SessionLoad
 " vim: set ft=vim :

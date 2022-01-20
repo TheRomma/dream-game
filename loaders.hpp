@@ -20,6 +20,9 @@ struct StaticModelLoader{
 
 	Uint32 texLength;		//Length of textures in bytes.
 	float* diffuse;			//Diffuse texture.
+
+	Uint32 metalRoughLength;//Length of the metallic & roughness map.
+	float* metalRough;		//Metallic & roughness map.
 };
 
 //Loader for animated model data.
@@ -38,6 +41,9 @@ struct AnimatedModelLoader{
 
 	Uint32 texLength;		//Length of textures in bytes.
 	float* diffuse;			//Diffuse texture.
+
+	Uint32 metalRoughLength;//Length of the metallic & roughness map.
+	float* metalRough;		//Metallic & roughness map.
 
 	//Armature data.
 	Uint32 numBones;		//Number of bones supported by model.

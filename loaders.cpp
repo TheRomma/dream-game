@@ -1,6 +1,7 @@
 #include "loaders.hpp"
 
 #include <fstream>
+#include <iostream>
 
 //Load static model (aka non animated model) data from file.
 StaticModelLoader::StaticModelLoader(const char* filename){
@@ -32,6 +33,10 @@ StaticModelLoader::StaticModelLoader(const char* filename){
 	diffIndices = (Uint16*)malloc(diffIndicesLength);
 	file.read((char*)diffIndices, diffIndicesLength);
 
+	file.read((char*)&metalRoughLength, 4);
+	metalRough = (float*)malloc(metalRoughLength);
+	file.read((char*)metalRough, metalRoughLength);
+
 	//Construct textures from indexed sources.
 	Uint32 numTexels = texWidth * texHeight * texDepth;
 	texLength = numTexels * 4 * sizeof(float);
@@ -55,6 +60,7 @@ StaticModelLoader::StaticModelLoader(const char* filename){
 StaticModelLoader::~StaticModelLoader(){
 	free(attributes);
 	free(diffuse);
+	free(metalRough);
 }
 
 //Load animated model data from file.
@@ -87,6 +93,10 @@ AnimatedModelLoader::AnimatedModelLoader(const char* filename){
 	diffIndices = (Uint16*)malloc(diffIndicesLength);
 	file.read((char*)diffIndices, diffIndicesLength);
 
+	file.read((char*)&metalRoughLength, 4);
+	metalRough = (float*)malloc(metalRoughLength);
+	file.read((char*)metalRough, metalRoughLength);
+
 	//Armature.
 	file.read((char*)&numBones, 4);
 
@@ -113,6 +123,7 @@ AnimatedModelLoader::AnimatedModelLoader(const char* filename){
 AnimatedModelLoader::~AnimatedModelLoader(){
 	free(attributes);
 	free(diffuse);
+	free(metalRough);
 }
 
 //Load skeletal animation files from file.

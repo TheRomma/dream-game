@@ -71,7 +71,7 @@ void Player::update(float delta, CollisionHandler& handler, PhysicsMesh& mesh){
 }
 
 void Level::init(std::string filename){
-	model.init((filename + ".mm").c_str());
+	model.init((filename + ".sm").c_str());
 	mesh.init((filename + ".pm").c_str());
 }
 

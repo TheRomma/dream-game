@@ -69,7 +69,7 @@ void StaticModel::init(const char* filename){
 	buffer.setAttribute(1, 3);
 	buffer.setAttribute(2, 3);
 
-	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse);
+	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse, file.metalRough);
 }
 
 //Draw the 3d model onto g-buffers.
@@ -118,7 +118,7 @@ void AnimatedModel::init(const char* filename){
 	buffer.setAttribute(3, 4);
 	buffer.setAttribute(4, 4);
 
-	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse);
+	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse, file.metalRough);
 
 	joints = (Mat4*)malloc(numBones * sizeof(Mat4));
 	for(unsigned int i=0;i<numBones;i++){

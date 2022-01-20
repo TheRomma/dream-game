@@ -34,10 +34,10 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	level.init("res/castle_level");
 
 	AnimatedModel aModel;
-	aModel.init("res/animated_model_new.am");
+	aModel.init("res/animated_multi_model_test.am");
 
 	Animation anim;
-	anim.init("res/test_inflate_new.ad");
+	anim.init("res/animated_multi_test.ad");
 	float animTimer = 0;
 
 	float timer = 0;
@@ -112,7 +112,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		player.update(delta, physics, level.mesh);
 		uniform.block.position = player.camera.position;
 		
-		animTimer += delta;
+		animTimer += delta * 0.5;
 		if(animTimer >= anim.duration){
 			animTimer = 0;
 		}
@@ -150,7 +150,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		lights.write();
 
 		level.draw();
-		aModel.draw(Mat4::identity());
+		aModel.draw(Mat4::translation(2,2,0));
 
 		//Shadows ------------------------------
 		lights.bind();
@@ -174,7 +174,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		lights.write();
 
 		level.drawSunShadows();
-		aModel.drawShadow(Mat4::identity());
+		aModel.drawShadow(Mat4::translation(2,2,0));
 		//Display ------------------------------
 		lights.sunCSM.bindTexture(SUN_SHADOW_BASE);
 		target->draw();

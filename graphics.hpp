@@ -31,14 +31,15 @@ struct VertexBuffer{
 //Higher level interface for common textures.
 struct Material{
 	Material(){};
-	void init(Uint32 width, Uint32 height, Uint32 depth,
-		Uint32 wrap, Uint32 filter, float* diffuse);
+	void init(Uint32 width, Uint32 height, Uint32 depth, Uint32 wrap,
+		Uint32 filter, float* diffSource, float* metalRoughSource);
 	~Material();
 
 	void bind(Uint32 slot);
 
 	private:
-	Uint32 diffTexture;		//Texture object handler.
+	Uint32 diffuse;		//Texture object handler.
+	Uint32 metalRough;
 };
 
 //Higher level interface for UBOs, SSBOs, etc.
