@@ -45,7 +45,7 @@ struct Level{
 	~Level(){};
 
 	void draw();
-	void drawSunShadows();
+	void drawSunShadows(LightUniforms& lights);
 
 	StaticModel model;
 	PhysicsMesh mesh;

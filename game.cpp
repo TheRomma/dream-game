@@ -139,12 +139,21 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		Spotlight plight;
 		plight.position = player.position + Vec3(0,0,2);
-		plight.radius = 30;
+		plight.radius = 40;
 		plight.direction = player.camera.direction;
-		plight.cutOff = 0.9;
-		plight.ambient = Vec3(0.5,0.0,0.0);
-		plight.diffuse = Vec3(5.0, 0.0, 0.0);
+		plight.cutOff = cos(0.785);
+		plight.ambient = Vec3(0.0,0.0,0.0);
+		plight.diffuse = Vec3(10.0, 0.0, 0.0);
 		lights.push(plight);
+
+		Spotlight plight1;
+		plight1.position = Vec3(6,6,3);
+		plight1.radius = 50;
+		plight1.direction = Vec3(-1,-1,0.5);
+		plight1.cutOff = cos(0.785);
+		plight1.ambient = Vec3(0.0,0.0,0.0);
+		plight1.diffuse = Vec3(10.0, 10.0, 0.0);
+		lights.push(plight1);
 
 		uniform.write();
 		lights.write();
@@ -154,29 +163,35 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		//Shadows ------------------------------
 		lights.bind();
-		lights.sunCSM.bind();
+		lights.bindShadowFrame();
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 
-		glClearColor(0.0, 0.0, 0.0, 1.0);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		Uint32 offset = 0;
+		for(unsigned int i=0;i<SUN_NUM_SHADOW_CASCADES;i++){
+			lights.shadows.bindLayer(i);
+			glClearColor(0.0, 0.0, 0.0, 1.0);
+			glClear(GL_DEPTH_BUFFER_BIT);
+		}
+		offset += SUN_NUM_SHADOW_CASCADES;
+		for(unsigned int i=0;i<lights.block.numSpotlights;i++){
+			lights.shadows.bindLayer(offset + i);
+			glClearColor(0.0, 0.0, 0.0, 1.0);
+			glClear(GL_DEPTH_BUFFER_BIT);
+		}
 
 		Vec3 front = player.camera.direction;
 
-		lights.sunCSM.calcProjViews(10, player.position, lights.block.sun.direction);
-		lights.block.sun.projViewCSM[0] = lights.sunCSM.projView[0];
-		lights.block.sun.projViewCSM[1] = lights.sunCSM.projView[1];
-		lights.block.sun.projViewCSM[2] = lights.sunCSM.projView[2];
-		lights.block.sun.projViewCSM[3] = lights.sunCSM.projView[3];
+		lights.calcShadowProjections(player.position);
 
 		lights.write();
 
-		level.drawSunShadows();
-		aModel.drawShadow(Mat4::translation(2,2,0));
+		level.drawSunShadows(lights);
+		aModel.drawShadow(Mat4::translation(2,2,0), lights);
 		//Display ------------------------------
-		lights.sunCSM.bindTexture(SUN_SHADOW_BASE);
+		lights.bindShadowMap();
 		target->draw();
 
 		target->display(window->width, window->height);

@@ -87,10 +87,9 @@ struct CSM{
 
 	void bind();
 	void bindTexture(Uint32 base);
-	void calcProjViews(float nearest, Vec3 target, Vec3 sunDirection);
+	void bindLayer(Uint32 layer);
 
 	Uint32 width, height, numMaps;
-	Mat4 projView[SUN_NUM_SHADOW_CASCADES];
 
 	private:
 	Uint32 frame, depth;
@@ -115,6 +114,7 @@ struct Pointlight{
 		char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
+	Mat4 projViewCSM[6];
 };
 
 //Spotlight data.
@@ -127,6 +127,7 @@ struct Spotlight{
 		char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
+	Mat4 projViewCSM;
 };
 
 //Light uniforms.
@@ -152,9 +153,12 @@ struct LightUniforms{
 	void push(Spotlight light);
 	void pushStatic(Pointlight* points, Uint32 numPoints, Spotlight* spots, Uint32 numSpots);
 	void write();
+	void calcShadowProjections(Vec3 position);
+	void bindShadowFrame();
+	void bindShadowMap();
 
 	LightBlock block;
-	CSM sunCSM;
+	CSM shadows;
 
 	private:
 	ShaderBuffer ubo;

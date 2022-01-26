@@ -151,7 +151,7 @@ void CSM::init(Uint32 width, Uint32 height, Uint32 numMaps){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	float border[4] = {1.0,1.0,1.0,1.0};
+	float border[4] = {0.0,0.0,0.0,1.0};
 	glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
 
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth, 0);
@@ -180,16 +180,9 @@ void CSM::bindTexture(Uint32 base){
 	glBindTexture(GL_TEXTURE_2D_ARRAY, depth);
 }
 
-//Calculate lights projView matrices.
-void CSM::calcProjViews(float nearest, Vec3 target, Vec3 sunDirection){
-	float scale = nearest;
-	for(unsigned int i=0;i<numMaps;i++){
-		projView[i] = Mat4::lookAt(
-		Vec3::normalize(sunDirection) * 100 + (target),
-		(target), Vec3(0,0,1)) * 
-		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 200.0);
-		scale *= 2;
-	}
+//Bind depth map.
+void CSM::bindLayer(Uint32 layer){
+	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth, 0, layer);
 }
 
 //-------------------------------------------------------------------------
@@ -197,7 +190,7 @@ void CSM::calcProjViews(float nearest, Vec3 target, Vec3 sunDirection){
 //LightUniforms init.
 LightUniforms::LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight){
 	ubo.init(GL_UNIFORM_BUFFER, UBO_LIGHT_BASE, sizeof(LightBlock), nullptr);
-	sunCSM.init(shadowWidth, shadowHeight, SUN_NUM_SHADOW_CASCADES);
+	shadows.init(shadowWidth, shadowHeight, SUN_NUM_SHADOW_CASCADES + MAX_SPOTLIGHTS);
 	this->reset();
 }
 
@@ -250,6 +243,36 @@ void LightUniforms::pushStatic(Pointlight* points, Uint32 numPoints, Spotlight* 
 void LightUniforms::write(){
 	ubo.write(0, sizeof(LightBlock), (char*)&block);
 	//this->reset();
+}
+
+//Calculate all shadow prohjections.
+void LightUniforms::calcShadowProjections(Vec3 position){
+	float scale = 10.0;
+	for(unsigned int i=0;i<SUN_NUM_SHADOW_CASCADES;i++){
+		block.sun.projViewCSM[i] = Mat4::lookAt(
+		Vec3::normalize(block.sun.direction) * 100 + (position),
+		(position), Vec3(0,0,1)) * 
+		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 200.0);
+		scale *= 2;
+	}
+
+	for(unsigned int i=0;i<block.numSpotlights;i++){
+		block.spotlights[i].projViewCSM = Mat4::lookAt(
+			block.spotlights[i].position,
+			Vec3::normalize(block.spotlights[i].direction) + block.spotlights[i].position,
+			Vec3(0,0,1)
+		) * Mat4::perspective(acos(block.spotlights[i].cutOff) * 2.0, 1, 0.01, 100.0);
+	}
+}
+
+//Bind shadow framebuffer.
+void LightUniforms::bindShadowFrame(){
+	shadows.bind();
+}
+
+//Bind shadow shadowmap.
+void LightUniforms::bindShadowMap(){
+	shadows.bindTexture(SHADOW_BASE);
 }
 
 //--------------------------------------------------------------------------------------------------

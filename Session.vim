@@ -325,12 +325,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 13 - ((12 * winheight(0) + 26) / 52)
+let s:l = 14 - ((13 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-13
-normal! 034|
+14
+normal! 0
 tabnext
 edit 3Dmaths.hpp
 set splitbelow splitright
@@ -468,11 +468,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 12 - ((11 * winheight(0) + 25) / 51)
+let s:l = 48 - ((5 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-12
+48
 normal! 07|
 wincmd w
 argglobal
@@ -597,12 +597,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 24 - ((5 * winheight(0) + 25) / 51)
+let s:l = 307 - ((33 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-24
-normal! 02|
+307
+normal! 05|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 78 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 132 + 105) / 211)
@@ -1018,12 +1018,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 46 - ((36 * winheight(0) + 25) / 51)
+let s:l = 48 - ((38 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-46
-normal! 0
+48
+normal! 045|
 wincmd w
 argglobal
 if bufexists("entities.cpp") | buffer entities.cpp | else | edit entities.cpp | endif
@@ -1147,12 +1147,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 74 - ((28 * winheight(0) + 25) / 51)
+let s:l = 83 - ((37 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-74
-normal! 030|
+83
+normal! 045|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 87 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 123 + 105) / 211)
@@ -1422,12 +1422,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 25 - ((24 * winheight(0) + 25) / 51)
+let s:l = 120 - ((5 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-25
-normal! 045|
+120
+normal! 0
 wincmd w
 2wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
@@ -1569,12 +1569,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 35 - ((19 * winheight(0) + 25) / 51)
+let s:l = 109 - ((5 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-35
-normal! 0
+109
+normal! 018|
 wincmd w
 argglobal
 if bufexists("graphics.cpp") | buffer graphics.cpp | else | edit graphics.cpp | endif
@@ -1698,12 +1698,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 323 - ((24 * winheight(0) + 25) / 51)
+let s:l = 264 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-323
-normal! 025|
+264
+normal! 068|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
@@ -1844,12 +1844,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 60 - ((23 * winheight(0) + 25) / 51)
+let s:l = 28 - ((17 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-60
-normal! 020|
+28
+normal! 034|
 wincmd w
 argglobal
 if bufexists("shader.cpp") | buffer shader.cpp | else | edit shader.cpp | endif
@@ -1973,12 +1973,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 540 - ((5 * winheight(0) + 25) / 51)
+let s:l = 614 - ((27 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-540
-normal! 0
+614
+normal! 013|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
@@ -2394,12 +2394,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 46 - ((45 * winheight(0) + 25) / 51)
+let s:l = 39 - ((17 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-46
-normal! 0
+39
+normal! 046|
 wincmd w
 argglobal
 if bufexists("models.cpp") | buffer models.cpp | else | edit models.cpp | endif
@@ -2523,12 +2523,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 64 - ((45 * winheight(0) + 25) / 51)
+let s:l = 180 - ((41 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-64
-normal! 052|
+180
+normal! 064|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)

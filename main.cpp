@@ -11,7 +11,7 @@ int main(int argc, const char* argv[]){
 	window.vsync(-1);
 
 	DeferredTarget target(320, 240);
-	
+
 	Uint32 next = LAYER_TEST;
 	while(next){
 		next = startLayer(next, &window, &target);

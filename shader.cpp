@@ -168,6 +168,7 @@ std::string glsl_commonLightStructs(){
 			vec4 position;//vec3 position, float radius
 			vec3 ambient;
 			vec3 diffuse;
+			mat4 view[6];
 		};
 
 		struct Spotlight{
@@ -175,6 +176,7 @@ std::string glsl_commonLightStructs(){
 			vec4 direction;//vec3 direction, float cutoff
 			vec3 ambient;
 			vec3 diffuse;
+			mat4 view;
 		};
 
 		layout(std140, binding = LIGHT_UBO_BINDING) uniform L{
@@ -268,9 +270,10 @@ std::string glsl_staticModelShadowVertex(){
 	layout(location = 0) in vec3 POSITION;
 
 	layout(location = 0) uniform mat4 u_model;
+	layout(location = 1) uniform mat4 u_lightSpace;
 
 	void main(){
-		gl_Position = u_model * vec4(POSITION, 1.0);
+		gl_Position = u_lightSpace * u_model * vec4(POSITION, 1.0);
 	}
 	)";	
 	return str;
@@ -278,24 +281,25 @@ std::string glsl_staticModelShadowVertex(){
 
 std::string glsl_allModelShadowGeometry(){
 	std::string str = R"(
-	#define NUM_CASCADES NUM_SHADOWS
+	#define NUM_SUN_CASCADES NUM_SUN_SHADOWS
 
-	layout(triangles, invocations = NUM_CASCADES) in;
+	layout(triangles, invocations = NUM_SUN_CASCADES) in;
 	layout(triangle_strip, max_vertices = 3) out;
 	
 	void main(){
-		for(unsigned int i=0;i<NUM_CASCADES;i++){
+		for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
 			gl_Position = 
 				sun.view[gl_InvocationID] * gl_in[i].gl_Position;
 			gl_Layer = gl_InvocationID;
 			EmitVertex();
 		}
+
 		EndPrimitive();
 	}
 	)";	
 	str.replace(
-		str.find("NUM_SHADOWS"),
-		std::string("NUM_SHADOWS").length(),
+		str.find("NUM_SUN_SHADOWS"),
+		std::string("NUM_SUN_SHADOWS").length(),
 		std::to_string(SUN_NUM_SHADOW_CASCADES)
 	);
 	return str;
@@ -358,10 +362,11 @@ std::string glsl_animatedModelShadowVertex(Uint32 numBones){
 	layout(location = 4) in vec4 WEIGHTS;
 
 	layout(location = 0) uniform mat4 u_model;
-	layout(location = 1) uniform mat4 u_joints[NUM_BONES];
+	layout(location = 1) uniform mat4 u_lightSpace;
+	layout(location = 2) uniform mat4 u_joints[NUM_BONES];
 
 	void main(){
-		gl_Position = u_model * (
+		gl_Position = u_lightSpace * u_model * (
 			u_joints[int(BONES.r)] * vec4(POSITION, 1.0) * WEIGHTS.r +
 			u_joints[int(BONES.g)] * vec4(POSITION, 1.0) * WEIGHTS.g +
 			u_joints[int(BONES.b)] * vec4(POSITION, 1.0) * WEIGHTS.b +
@@ -564,7 +569,23 @@ std::string glsl_lightCalculations(){
 			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
 		}
 
-		vec3 calcSpotlight(Spotlight light, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough){
+		float calcSpotShadow(Spotlight light, vec3 position, int index, sampler2DArray shadowMap){
+			vec3 pos = posTime.rgb;
+
+			vec4 lightSpaceFrag = light.view * vec4(position.rgb, 1.0);
+			vec3 projPos = lightSpaceFrag.xyz / lightSpaceFrag.w;
+			if(projPos.z > 1.0){return 0.0;}
+			projPos = projPos * 0.5 + 0.5;
+			float currentDepth = projPos.z;
+			
+			float shadow = 0.0;
+			float pcfDepth = 0.0;
+			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
+
+			return calcPCF(index, projPos, currentDepth, shadowMap);
+		}
+
+		vec3 calcSpotlight(Spotlight light, int index, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough, sampler2DArray shadowMap){
 			vec3 ab = light.position.rgb - position.rgb;
 			float distSquare = dot(ab, ab);
 
@@ -582,9 +603,11 @@ std::string glsl_lightCalculations(){
 			vec3 radiance = vec3(0.0);
 			
 			float theta = dot(direction, normalize(-light.direction.rgb));
-			if(theta > cos(light.direction.a)){
+			float angle = light.direction.a;
+			if(theta > angle){
 				vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
-				radiance = ambient + diffuse;
+				float shadow = calcSpotShadow(light, position, index, shadowMap);
+				radiance = ambient + (1.0 - shadow) * diffuse;
 			}else{
 				radiance = ambient;
 			}
@@ -606,7 +629,7 @@ std::string glsl_lightCalculations(){
 //Shaders for calculating light data.
 std::string glsl_deferredLightPassFragment(){
 	std::string str = R"(
-	#define FOG_DISTANCE 80
+	#define FOG_DISTANCE 200
 	#define NUM_SUN_CASCADES 4
 
 	out vec4 outColor;
@@ -618,10 +641,11 @@ std::string glsl_deferredLightPassFragment(){
 	layout(binding = 0) uniform sampler2D u_position;
 	layout(binding = 1) uniform sampler2D u_normal;
 	layout(binding = 2) uniform sampler2D u_albedo;
-	layout(binding = SUN_SHADOW_BASE) uniform sampler2DArray u_sunShadow;
+	layout(binding = SHADOW_BASE) uniform sampler2DArray u_shadowMap;
 
 	void main(){
 
+		//vec3 shadowTest = texture(u_shadowMap, vec3(F.uv_coord, 4.0)).rgb;
 		vec4 normal = texture(u_normal, F.uv_coord).rgba;
 		if(normal.rgb != vec3(0.0, 0.0, 0.0)){
 
@@ -631,28 +655,31 @@ std::string glsl_deferredLightPassFragment(){
 			vec2 metalRough = vec2(albedo.a, normal.a);
 
 			vec3 result = vec3(0.0);
-			if(position.a < FOG_DISTANCE){
+			if(distance < FOG_DISTANCE){
 
 				vec3 V = normalize(posTime.rgb - position.rgb);
 
 				vec3 F0 = vec3(0.04);
 				F0 = mix(F0, albedo.rgb, metalRough.r);
 
+				int offset = 0;
+
 				//Sunlight
-				result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_sunShadow);
+				result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_shadowMap);
 
 				//Pointlights
 				for(unsigned int i=0;i<numLights.r;i++){
 					result += calcPointlight(pointlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
 				}
 
+				offset += NUM_SUN_CASCADES;
 				//Spotlights
-				for(unsigned int i=0;i<numLights.b;i++){
-					result += calcSpotlight(spotlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
+				for(int i=0;i<numLights.b;i++){
+					result += calcSpotlight(spotlights[i], offset + i, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, u_shadowMap);
 				}
 				
 				//Fog
-				float fogRatio = position.a / FOG_DISTANCE;
+				float fogRatio = distance / FOG_DISTANCE;
 				result = result * (1 - fogRatio) + sun.ambient * fogRatio;
 
 			}else{
@@ -666,15 +693,16 @@ std::string glsl_deferredLightPassFragment(){
 		}else{
 
 			outColor = vec4(sun.ambient, 1.0);
+			//outColor = vec4(shadowTest, 1.0);
 			//discard;
 
 		}
 	}
 	)";	
 	str.replace(
-		str.find("SUN_SHADOW_BASE"),
-		std::string("SUN_SHADOW_BASE").length(),
-		std::to_string(SUN_SHADOW_BASE)
+		str.find("SHADOW_BASE"),
+		std::string("SHADOW_BASE").length(),
+		std::to_string(SHADOW_BASE)
 	);
 	return str;
 }
