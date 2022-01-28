@@ -603,11 +603,14 @@ std::string glsl_lightCalculations(){
 			vec3 radiance = vec3(0.0);
 			
 			float theta = dot(direction, normalize(-light.direction.rgb));
-			float angle = light.direction.a;
-			if(theta > angle){
+			if(theta > light.direction.a){
 				vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
 				float shadow = calcSpotShadow(light, position, index, shadowMap);
-				radiance = ambient + (1.0 - shadow) * diffuse;
+				
+				float epsilon = 0.05;
+				float intensity = clamp((theta - (light.direction.a + epsilon)) / epsilon, 0.0, 1.0);
+
+				radiance = ambient + (1.0 - shadow) * (diffuse * intensity);
 			}else{
 				radiance = ambient;
 			}
@@ -688,7 +691,7 @@ std::string glsl_deferredLightPassFragment(){
 
 			}
 
-			outColor = vec4(toneMapping(result, 1.0, 1.0), 1.0);
+			outColor = vec4(toneMapping(result, 1.0, 1.1), 1.0);
 
 		}else{
 

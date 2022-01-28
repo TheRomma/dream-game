@@ -325,12 +325,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 14 - ((13 * winheight(0) + 26) / 52)
+let s:l = 13 - ((12 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-14
-normal! 0
+13
+normal! 030|
 tabnext
 edit 3Dmaths.hpp
 set splitbelow splitright
@@ -1422,14 +1422,13 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 120 - ((5 * winheight(0) + 25) / 51)
+let s:l = 160 - ((24 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-120
-normal! 0
+160
+normal! 031|
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
 tabnext
@@ -1569,11 +1568,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 109 - ((5 * winheight(0) + 25) / 51)
+let s:l = 134 - ((12 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-109
+134
 normal! 018|
 wincmd w
 argglobal
@@ -1973,13 +1972,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 614 - ((27 * winheight(0) + 25) / 51)
+let s:l = 613 - ((26 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-614
-normal! 013|
+613
+normal! 074|
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
 tabnext
@@ -2807,7 +2807,7 @@ normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 6
+tabnext 8
 set stal=1
 badd +1 makefile
 badd +1 main.cpp

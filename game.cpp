@@ -19,9 +19,9 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	Keyboard kb;
 	kb.init();
 
-	LightUniforms lights(512, 512);
+	LightUniforms lights(1024, 1024);
 	lights.block.sun.direction = Vec3(1,1,1);
-	lights.block.sun.ambient = Vec3(0.02,0.02,0.1);
+	lights.block.sun.ambient = Vec3(0.1,0.04,0.2);
 	lights.block.sun.diffuse = Vec3(2.0,2.0,8.0);
 	lights.write();
 	
@@ -48,6 +48,10 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	bool alive = true;
 	SDL_Event event;
 	Uint32 nextLayer = 0;
+
+	bool updateFlashlight = true;
+	Vec3 flashlightPos = Vec3(0.0, 0.0, 0.0);
+	Vec3 flashlightDir = Vec3(0.0, 0.0, 0.0);
 
 	while(alive){
 		//Input -------------------------------------------------------------------------
@@ -99,6 +103,13 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 							SDL_SetRelativeMouseMode(SDL_TRUE);
 						}
 					}
+					if(event.key.keysym.scancode == SDL_SCANCODE_V){
+						if(updateFlashlight){
+							updateFlashlight = false;
+						}else{
+							updateFlashlight = true;
+						}
+					}
 					break;
 			}
 		}
@@ -137,13 +148,18 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		uniform.block.projView = player.camera.getView() * proj;
 		uniform.block.time = timer;
 
+		if(updateFlashlight){
+			flashlightPos = player.position + Vec3(0,0,2);
+			flashlightDir = player.camera.direction;
+		}
+
 		Spotlight plight;
-		plight.position = player.position + Vec3(0,0,2);
-		plight.radius = 40;
-		plight.direction = player.camera.direction;
-		plight.cutOff = cos(0.785);
-		plight.ambient = Vec3(0.0,0.0,0.0);
-		plight.diffuse = Vec3(10.0, 0.0, 0.0);
+		plight.position = flashlightPos;
+		plight.radius = 50;
+		plight.direction = flashlightDir;
+		plight.cutOff = cos(1.0);
+		plight.ambient = Vec3(1.0,0.0,0.0);
+		plight.diffuse = Vec3(15.0, 0.0, 0.0);
 		lights.push(plight);
 
 		Spotlight plight1;
