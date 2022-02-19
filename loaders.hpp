@@ -77,3 +77,16 @@ struct PhysicsMeshLoader{
 	Uint32 indsLength;		//Length of meshes indices in bytes.
 	Uint16* indices;		//Number of vertices in a convex.
 };
+
+//Loader for environment map data.
+struct EnvironmentMapLoader{
+	EnvironmentMapLoader(const char* filename);
+	~EnvironmentMapLoader();
+
+	//Material data.
+	Uint32 texWidth;		//Width of material texture.
+	Uint32 texHeight;		//Height of material texture.
+
+	Uint32 sideLength;		//Length of one side in bytes.
+	float* diffuse;			//Diffuse map data.
+};

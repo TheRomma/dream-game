@@ -10,7 +10,7 @@ int main(int argc, const char* argv[]){
 	window.init("Test title", 1280, 720, SDL_WINDOW_RESIZABLE);
 	window.vsync(-1);
 
-	DeferredTarget target(320, 240);
+	DeferredTarget target(1920, 1080);
 
 	Uint32 next = LAYER_TEST;
 	while(next){

@@ -19,19 +19,19 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	Keyboard kb;
 	kb.init();
 
-	LightUniforms lights(1024, 1024);
-	lights.block.sun.direction = Vec3(1,1,1);
-	lights.block.sun.ambient = Vec3(0.1,0.04,0.2);
-	lights.block.sun.diffuse = Vec3(2.0,2.0,8.0);
+	LightUniforms lights(1024, 1024, "res/test_skybox.em");
+	lights.block.sun.direction = Vec3::normalize(Vec3(-2.5,4,3));
+	lights.block.sun.ambient = Vec3(0.7,0.7,0.7);
+	lights.block.sun.diffuse = Vec3(8.0,8.0,7.0);
 	lights.write();
 	
 	CollisionHandler physics;
 
 	Player player;
-	player.init(Vec3(0,9,0), -1.57);
+	player.init(Vec3(2,8,1), -1.57);
 
 	Level level;
-	level.init("res/castle_level");
+	level.init("res/tech_demo");
 
 	AnimatedModel aModel;
 	aModel.init("res/animated_multi_model_test.am");
@@ -52,6 +52,9 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	bool updateFlashlight = true;
 	Vec3 flashlightPos = Vec3(0.0, 0.0, 0.0);
 	Vec3 flashlightDir = Vec3(0.0, 0.0, 0.0);
+
+	//EnvironmentMap skybox;
+	//skybox.init("res/test_skybox.em");
 
 	while(alive){
 		//Input -------------------------------------------------------------------------
@@ -142,7 +145,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-		lights.block.sun.direction = Vec3(cos(timer), sin(timer), 1.0);
+		//lights.block.sun.direction = Vec3(cos(timer), sin(timer), 1.0);
 
 		Mat4 proj = Mat4::perspective(3.14 / 2, window->getAspect(), 0.01, 10.0);
 		uniform.block.projView = player.camera.getView() * proj;
@@ -157,9 +160,9 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		plight.position = flashlightPos;
 		plight.radius = 50;
 		plight.direction = flashlightDir;
-		plight.cutOff = cos(1.0);
-		plight.ambient = Vec3(1.0,0.0,0.0);
-		plight.diffuse = Vec3(15.0, 0.0, 0.0);
+		plight.cutOff = cos(0.9);
+		plight.ambient = Vec3(0.0,0.0,0.0);
+		plight.diffuse = Vec3(8.0, 0.0, 0.0);
 		lights.push(plight);
 
 		Spotlight plight1;
@@ -168,11 +171,12 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		plight1.direction = Vec3(-1,-1,0.5);
 		plight1.cutOff = cos(0.785);
 		plight1.ambient = Vec3(0.0,0.0,0.0);
-		plight1.diffuse = Vec3(10.0, 10.0, 0.0);
+		plight1.diffuse = Vec3(8.0, 10.0, 0.0);
 		lights.push(plight1);
 
 		uniform.write();
 		lights.write();
+
 
 		level.draw();
 		aModel.draw(Mat4::translation(2,2,0));
@@ -208,6 +212,13 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		aModel.drawShadow(Mat4::translation(2,2,0), lights);
 		//Display ------------------------------
 		lights.bindShadowMap();
+		lights.bindEnvironmentMap();
+		//skybox.bind(4);
+		target->bindDisplay();
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
+		//skybox.display();
+		lights.displayEnvironmentMap();
 		target->draw();
 
 		target->display(window->width, window->height);

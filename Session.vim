@@ -330,7 +330,7 @@ if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
 13
-normal! 030|
+normal! 020|
 tabnext
 edit 3Dmaths.hpp
 set splitbelow splitright
@@ -1422,12 +1422,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 160 - ((24 * winheight(0) + 25) / 51)
+let s:l = 221 - ((34 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-160
-normal! 031|
+221
+normal! 039|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
@@ -1568,12 +1568,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 134 - ((12 * winheight(0) + 25) / 51)
+let s:l = 97 - ((21 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-134
-normal! 018|
+97
+normal! 0
 wincmd w
 argglobal
 if bufexists("graphics.cpp") | buffer graphics.cpp | else | edit graphics.cpp | endif
@@ -1697,13 +1697,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 264 - ((45 * winheight(0) + 25) / 51)
+let s:l = 217 - ((31 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-264
-normal! 068|
+217
+normal! 021|
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
 tabnext
@@ -1843,12 +1844,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 28 - ((17 * winheight(0) + 25) / 51)
+let s:l = 46 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-28
-normal! 034|
+46
+normal! 030|
 wincmd w
 argglobal
 if bufexists("shader.cpp") | buffer shader.cpp | else | edit shader.cpp | endif
@@ -1972,14 +1973,13 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 613 - ((26 * winheight(0) + 25) / 51)
+let s:l = 719 - ((17 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-613
-normal! 074|
+719
+normal! 0
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
 tabnext
@@ -2119,12 +2119,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 45 - ((32 * winheight(0) + 25) / 51)
+let s:l = 70 - ((18 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-45
-normal! 05|
+70
+normal! 0
 wincmd w
 argglobal
 if bufexists("loaders.cpp") | buffer loaders.cpp | else | edit loaders.cpp | endif
@@ -2248,12 +2248,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 63 - ((17 * winheight(0) + 25) / 51)
+let s:l = 209 - ((31 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-63
-normal! 05|
+209
+normal! 021|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 84 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 126 + 105) / 211)
@@ -2271,8 +2271,8 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 60 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 150 + 105) / 211)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -2394,12 +2394,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 39 - ((17 * winheight(0) + 25) / 51)
+let s:l = 76 - ((24 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-39
-normal! 046|
+76
+normal! 0
 wincmd w
 argglobal
 if bufexists("models.cpp") | buffer models.cpp | else | edit models.cpp | endif
@@ -2523,15 +2523,15 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 180 - ((41 * winheight(0) + 25) / 51)
+let s:l = 218 - ((50 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-180
-normal! 064|
+218
+normal! 0
 wincmd w
-exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 60 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 150 + 105) / 211)
 tabnext
 edit system.hpp
 set splitbelow splitright
@@ -2807,7 +2807,7 @@ normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 8
+tabnext 7
 set stal=1
 badd +1 makefile
 badd +1 main.cpp
@@ -2823,9 +2823,9 @@ badd +1 system.hpp
 badd +192 3Dmaths.cpp
 badd +366 3Dphysics.cpp
 badd +46 entities.cpp
-badd +0 game.cpp
+badd +1 game.cpp
 badd +1 graphics.cpp
-badd +1 shader.cpp
+badd +0 shader.cpp
 badd +1 loaders.cpp
 badd +1 models.cpp
 badd +1 system.cpp

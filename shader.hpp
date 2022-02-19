@@ -54,7 +54,8 @@ std::string glsl_deferredStaticModelVertex();
 std::string glsl_deferredAllModelFragment();
 
 std::string glsl_staticModelShadowVertex();
-std::string glsl_allModelShadowGeometry();
+std::string glsl_allModelShadowFragment();
+//std::string glsl_allModelShadowGeometry();
 
 //Shader program for animated models.
 std::string glsl_deferredAnimatedModelVertex(Uint32 numBones);
@@ -70,3 +71,7 @@ std::string glsl_lightCalculations();
 
 //Shaders for calculating light data.
 std::string glsl_deferredLightPassFragment();
+
+//Shaders for displaying environment maps.
+std::string glsl_environmentVertex();
+std::string glsl_environmentFragment();

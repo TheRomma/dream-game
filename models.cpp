@@ -55,13 +55,13 @@ void StaticModel::init(const char* filename){
 
 	gProgram.init(
 		(glsl_header() + glsl_commonUniforms() + glsl_deferredStaticModelVertex()).c_str(),
-		(glsl_header() + glsl_deferredAllModelFragment()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_deferredAllModelFragment()).c_str()
 	);
 
 	shadowProgram.init(
 		(glsl_header() + glsl_staticModelShadowVertex()).c_str(),
-		//(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_allModelShadowGeometry()).c_str(),
-		(glsl_header() + glsl_emptyShader()).c_str()
+		//(glsl_header() + glsl_emptyShader()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_allModelShadowFragment()).c_str()
 	);
 
 	buffer.init(9 * sizeof(float), file.attribLength, file.attributes);
@@ -116,7 +116,7 @@ void AnimatedModel::init(const char* filename){
 
 	gProgram.init(
 		(glsl_header() + glsl_commonUniforms() + glsl_deferredAnimatedModelVertex(numBones)).c_str(),
-		(glsl_header() + glsl_deferredAllModelFragment()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_deferredAllModelFragment()).c_str()
 	);
 
 	shadowProgram.init(
@@ -215,3 +215,4 @@ PhysicsMesh::~PhysicsMesh(){
 }
 
 //------------------------------------------------------------------------------------------------------
+

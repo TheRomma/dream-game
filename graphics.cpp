@@ -151,7 +151,7 @@ void CSM::init(Uint32 width, Uint32 height, Uint32 numMaps){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-	float border[4] = {0.0,0.0,0.0,1.0};
+	float border[4] = {1.0,1.0,1.0,1.0};
 	glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
 
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth, 0);
@@ -187,10 +187,128 @@ void CSM::bindLayer(Uint32 layer){
 
 //-------------------------------------------------------------------------
 
+#include "loaders.hpp"
+//A cube map for environment mapping and skyboxes.
+void EnvironmentMap::init(const char* filename){
+	EnvironmentMapLoader file(filename);
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+
+	Uint32 offset = 0;
+	/*
+	for(unsigned int i=0;i<6;i++){
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+		offset += file.sideLength;
+	}
+	*/
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+
+	offset += file.sideLength;
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+
+	offset += file.sideLength;
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+
+	offset += file.sideLength;
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+
+	offset += file.sideLength;
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+
+	offset += file.sideLength;
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB32F, file.texWidth, file.texHeight, 0, GL_RGB, GL_FLOAT, file.diffuse + offset);
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+	float vertices[108] = {
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f, -1.0f,
+		 1.0f,  1.0f,  1.0f,
+		 1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f, -1.0f,
+		 1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		 1.0f, -1.0f,  1.0f
+	};
+
+	buffer.init(3 * sizeof(float), 108 * sizeof(float), vertices);
+	buffer.setAttribute(0, 3);
+
+	program.init(
+		(glsl_header() + glsl_commonUniforms() + glsl_environmentVertex()).c_str(),
+		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_environmentFragment()).c_str()
+	);
+}
+
+//Environment map destructor.
+EnvironmentMap::~EnvironmentMap(){
+	if(texture){
+		glDeleteTextures(1, &texture);
+	}
+}
+
+//Bind environment map.
+void EnvironmentMap::bind(Uint32 slot){
+	glActiveTexture(GL_TEXTURE0 + slot);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+}
+
+//Display map.
+void EnvironmentMap::display(){
+	program.use();
+	buffer.bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+}
+
+//-------------------------------------------------------------------------
+
 //LightUniforms init.
-LightUniforms::LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight){
+LightUniforms::LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight, const char* environment){
 	ubo.init(GL_UNIFORM_BUFFER, UBO_LIGHT_BASE, sizeof(LightBlock), nullptr);
 	shadows.init(shadowWidth, shadowHeight, SUN_NUM_SHADOW_CASCADES + MAX_SPOTLIGHTS);
+	envMap.init(environment);
 	this->reset();
 }
 
@@ -253,7 +371,7 @@ void LightUniforms::calcShadowProjections(Vec3 position){
 		Vec3::normalize(block.sun.direction) * 100 + (position),
 		(position), Vec3(0,0,1)) * 
 		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 200.0);
-		scale *= 2;
+		scale *= 2.1;
 	}
 
 	for(unsigned int i=0;i<block.numSpotlights;i++){
@@ -273,6 +391,16 @@ void LightUniforms::bindShadowFrame(){
 //Bind shadow shadowmap.
 void LightUniforms::bindShadowMap(){
 	shadows.bindTexture(SHADOW_BASE);
+}
+
+//Bind environment map.
+void LightUniforms::bindEnvironmentMap(){
+	envMap.bind(4);
+}
+
+//Display environment map.
+void LightUniforms::displayEnvironmentMap(){
+	envMap.display();
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -301,7 +429,7 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
-	//Albedo and metalic data.
+	//Albedo and metallic data.
 	glGenTextures(1, &gAlbedo);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -391,7 +519,7 @@ void DeferredTarget::draw(){
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);

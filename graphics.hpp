@@ -95,6 +95,20 @@ struct CSM{
 	Uint32 frame, depth;
 };
 
+//Environment map
+struct EnvironmentMap{
+	EnvironmentMap(){};
+	void init(const char* filename);
+	~EnvironmentMap();
+
+	void bind(Uint32 slot);
+	void display();
+
+	Uint32 texture; 
+	Shader program;
+	VertexBuffer buffer;
+};
+
 //Sun data.
 struct Sun{
 	Vec3 direction;
@@ -143,7 +157,7 @@ struct LightBlock{
 
 //UBO containing light uniforms for light calculations.
 struct LightUniforms{
-	LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight);
+	LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight, const char* environment);
 	~LightUniforms(){};
 
 	void bind();
@@ -156,9 +170,12 @@ struct LightUniforms{
 	void calcShadowProjections(Vec3 position);
 	void bindShadowFrame();
 	void bindShadowMap();
+	void bindEnvironmentMap();
+	void displayEnvironmentMap();
 
 	LightBlock block;
 	CSM shadows;
+	EnvironmentMap envMap;
 
 	private:
 	ShaderBuffer ubo;

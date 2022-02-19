@@ -143,6 +143,27 @@ std::string glsl_commonUniforms(){
 			mat4 projView;
 			vec4 posTime;
 		};
+
+		#define PI 3.14159265358979323846264
+
+		float noise(vec2 coord){
+			return fract(sin(dot(
+				coord.xy, vec2(12.9898, 78.233))) * 43758.5453123 * posTime.a
+			);
+		}
+
+		vec3 toneMapping(vec3 color, float gamma, float exposure){
+			vec3 toned = vec3(1.0) - exp(-color * exposure);
+			toned = pow(toned, vec3(1.0 / gamma));
+
+			return toned;
+		}
+
+		float noise(vec3 coord){
+			return fract(sin(dot(
+				coord.xyz, vec3(12.9898, 78.233, 144.7272))) * 43758.5453123 * posTime.a
+			);
+		}
 	)";
 	str.replace(
 		str.find("UBO_BINDING"),
@@ -256,10 +277,22 @@ std::string glsl_deferredAllModelFragment(){
 		layout(binding = 1) uniform sampler2DArray u_metalRough;
 
 		void main(){
-			gPosition = F.position;
-			vec2 metalRough = texture(u_metalRough, F.uv_coord).rg;
-			gNormal = vec4(normalize(F.normal), metalRough.g);
-			gAlbedo = vec4(texture(u_diffuse, F.uv_coord).rgb, metalRough.r);
+			vec4 diffColor = texture(u_diffuse, F.uv_coord).rgba;
+			if(diffColor.a < 1.0){
+				if(noise(gl_FragCoord.xyz) < diffColor.a){
+					gPosition = F.position;
+					vec2 metalRough = texture(u_metalRough, F.uv_coord).rg;
+					gNormal = vec4(normalize(F.normal), metalRough.g);
+					gAlbedo = vec4(diffColor.rgb, metalRough.r);
+				}else{
+					discard;
+				}
+			}else{
+				gPosition = F.position;
+				vec2 metalRough = texture(u_metalRough, F.uv_coord).rg;
+				gNormal = vec4(normalize(F.normal), metalRough.g);
+				gAlbedo = vec4(diffColor.rgb, metalRough.r);
+			}
 		}
 	)";	
 	return str;
@@ -268,17 +301,48 @@ std::string glsl_deferredAllModelFragment(){
 std::string glsl_staticModelShadowVertex(){
 	std::string str = R"(
 	layout(location = 0) in vec3 POSITION;
+	layout(location = 1) in vec3 UV_COORD;
+
+	out VS_OUT{
+		vec3 uv_coord;
+	} F;
 
 	layout(location = 0) uniform mat4 u_model;
 	layout(location = 1) uniform mat4 u_lightSpace;
 
 	void main(){
 		gl_Position = u_lightSpace * u_model * vec4(POSITION, 1.0);
+		F.uv_coord = UV_COORD;
 	}
 	)";	
 	return str;
 }
 
+std::string glsl_allModelShadowFragment(){
+	std::string str = R"(
+	layout(binding = 0) uniform sampler2DArray u_diffuse;
+
+	in VS_OUT{
+		vec3 uv_coord;
+	}F;
+
+	void main(){
+		float alpha = texture(u_diffuse, F.uv_coord).a;
+		if(alpha < 1.0){
+			if(noise(gl_FragCoord.xyz) < alpha){
+				discard;
+			}else{
+				//Empty
+			}
+		}else{
+			//Empty
+		}
+	}
+	)";	
+	return str;
+}
+
+/*
 std::string glsl_allModelShadowGeometry(){
 	std::string str = R"(
 	#define NUM_SUN_CASCADES NUM_SUN_SHADOWS
@@ -304,6 +368,7 @@ std::string glsl_allModelShadowGeometry(){
 	);
 	return str;
 }
+*/
 
 //------------------------------------------------------------------------------------------------------
 
@@ -415,8 +480,10 @@ std::string glsl_displayQuadFragment(){
 		layout(binding = 0) uniform sampler2D u_image;
 
 		void main(){
-			outColor = texture(u_image, F.uv_coord);
+			vec3 color = texture(u_image, F.uv_coord).rgb;
+			outColor = vec4(toneMapping(color, 1.0, 1.1), 1.0);
 			//outColor = texture(u_image, vec2((F.uv_coord.x + cos(posTime.a + F.uv_coord.y * 10) * 0.02) * 0.96 + 0.02, F.uv_coord.y));
+			//outColor = texture(u_image, vec2((F.uv_coord.x + noise(gl_FragCoord.xyz) * 0.1) * 0.8 + 0.1, F.uv_coord.y));
 		}
 	)";	
 	return str;
@@ -427,8 +494,6 @@ std::string glsl_displayQuadFragment(){
 //Contains various light calculation functions in glsl. Requires commonLightStructs.
 std::string glsl_lightCalculations(){
 	std::string str = R"(
-		#define PI 3.14
-
 		float distributionGGX(vec3 N, vec3 H, float roughness){
 			float a = roughness * roughness;
 			float a2 = a * a;
@@ -526,26 +591,29 @@ std::string glsl_lightCalculations(){
 
 			vec3 direction = normalize(light.direction);
 
+			vec3 ambient = light.ambient * albedo * 0.2;
+
 			if(light.diffuse == vec3(0.0, 0.0, 0.0)){
-				radiance = light.ambient * albedo;
-				return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+				//radiance = ambient;
+				//return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+				return ambient;
 			}
 
 			float diffRatio = max(dot(normal, direction), 0.0);
 
-			vec3 ambient = light.ambient * albedo;
 			if(diffRatio <= 0){
-				radiance = ambient;
-				return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+				//radiance = ambient;
+				//return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+				return ambient;
 			}
 
 			vec3 diffuse = light.diffuse * diffRatio * albedo;
 
 			float shadow = calcSunShadow(sun, position.rgb, numShadowCascades, shadowMap);
 
-			radiance = ambient + (1.0 - shadow) * diffuse;
+			radiance = (1.0 - shadow) * diffuse;
 
-			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
+			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough) + ambient;
 		}
 
 		vec3 calcPointlight(Pointlight light, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough){
@@ -616,13 +684,6 @@ std::string glsl_lightCalculations(){
 			}
 			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
 		}
-
-		vec3 toneMapping(vec3 color, float gamma, float exposure){
-			vec3 toned = vec3(1.0) - exp(-color * exposure);
-			toned = pow(toned, vec3(1.0 / gamma));
-
-			return toned;
-		}
 	)";
 	return str;
 }
@@ -635,7 +696,7 @@ std::string glsl_deferredLightPassFragment(){
 	#define FOG_DISTANCE 200
 	#define NUM_SUN_CASCADES 4
 
-	out vec4 outColor;
+	layout(location = 0) out vec4 outColor;
 
 	in VS_OUT{
 		vec2 uv_coord;
@@ -645,6 +706,7 @@ std::string glsl_deferredLightPassFragment(){
 	layout(binding = 1) uniform sampler2D u_normal;
 	layout(binding = 2) uniform sampler2D u_albedo;
 	layout(binding = SHADOW_BASE) uniform sampler2DArray u_shadowMap;
+	layout(binding = 4) uniform samplerCube u_environmentMap;
 
 	void main(){
 
@@ -667,6 +729,12 @@ std::string glsl_deferredLightPassFragment(){
 
 				int offset = 0;
 
+				if(metalRough.r > 0.0){
+					float rough = metalRough.g * textureQueryLevels(u_environmentMap) * 0.8;
+					vec3 R = reflect(-V, normal.rgb);
+					result += metalRough.r * albedo.rgb * textureLod(u_environmentMap, vec3(R.x, -R.z, -R.y), rough).rgb;
+				}
+
 				//Sunlight
 				result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_shadowMap);
 
@@ -683,21 +751,20 @@ std::string glsl_deferredLightPassFragment(){
 				
 				//Fog
 				float fogRatio = distance / FOG_DISTANCE;
-				result = result * (1 - fogRatio) + sun.ambient * fogRatio;
+				result = result * (1 - fogRatio) + sun.ambient * 0.2 * fogRatio;
 
 			}else{
 
-				result = sun.ambient;
+				result = sun.ambient * 0.2;
 
 			}
-
-			outColor = vec4(toneMapping(result, 1.0, 1.1), 1.0);
+			outColor = vec4(result.rgb, 1.0);
 
 		}else{
 
-			outColor = vec4(sun.ambient, 1.0);
+			//outColor = vec4(sun.ambient, 1.0);
 			//outColor = vec4(shadowTest, 1.0);
-			//discard;
+			discard;
 
 		}
 	}
@@ -707,5 +774,51 @@ std::string glsl_deferredLightPassFragment(){
 		std::string("SHADOW_BASE").length(),
 		std::to_string(SHADOW_BASE)
 	);
+	return str;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::string glsl_environmentVertex(){
+	std::string str = R"(
+	layout(location = 0) in vec3 POSITION;
+
+	out VS_OUT{
+		vec3 uv_coord;
+	} F;
+
+	void main()
+	{
+		mat4 originView = projView;
+		originView[3][0] = 0;
+		originView[3][1] = 0;
+		originView[3][2] = 0;
+		originView[3][3] = 0.01;
+
+		gl_Position = originView * vec4(POSITION, 1.0);
+		//gl_Position = pos.xyzw;
+
+		F.uv_coord = POSITION;
+	}
+	)";
+	return str;
+}
+
+std::string glsl_environmentFragment(){
+	std::string str = R"(
+	out vec4 outColor;
+
+	in VS_OUT{
+		vec3 uv_coord;
+	}F;
+
+	layout(binding = 0) uniform samplerCube diffuse;
+
+	void main()
+	{
+		vec4 mapColor = texture(diffuse, vec3(F.uv_coord.x, -F.uv_coord.z, -F.uv_coord.y));
+		outColor = mapColor * 0.9 + vec4(sun.ambient * 0.2 * 0.1, 1.0);
+	}
+	)";
 	return str;
 }
