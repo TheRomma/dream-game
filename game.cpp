@@ -36,6 +36,9 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	AnimatedModel aModel;
 	aModel.init("res/animated_multi_model_test.am");
 
+	StaticModel ball_0;
+	ball_0.init("res/steel_ball.sm");
+
 	Animation anim;
 	anim.init("res/animated_multi_test.ad");
 	float animTimer = 0;
@@ -52,6 +55,8 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	bool updateFlashlight = true;
 	Vec3 flashlightPos = Vec3(0.0, 0.0, 0.0);
 	Vec3 flashlightDir = Vec3(0.0, 0.0, 0.0);
+
+	float delta = 0.01;
 
 	//EnvironmentMap skybox;
 	//skybox.init("res/test_skybox.em");
@@ -119,7 +124,10 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		//Update -------------------------------------------------------------------------
 		clock.update();
-		float delta = clock.dt;
+		delta = clock.dt;
+		if(delta > 0.1){
+			delta = 0.1;
+		}
 
 		timer += delta;
 		player.input(delta, kb);
@@ -161,7 +169,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		plight.radius = 50;
 		plight.direction = flashlightDir;
 		plight.cutOff = cos(0.9);
-		plight.ambient = Vec3(0.0,0.0,0.0);
+		//plight.ambient = Vec3(0.0,0.0,0.0);
 		plight.diffuse = Vec3(8.0, 0.0, 0.0);
 		lights.push(plight);
 
@@ -170,16 +178,44 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		plight1.radius = 50;
 		plight1.direction = Vec3(-1,-1,0.5);
 		plight1.cutOff = cos(0.785);
-		plight1.ambient = Vec3(0.0,0.0,0.0);
+		//plight1.ambient = Vec3(0.0,0.0,0.0);
 		plight1.diffuse = Vec3(8.0, 10.0, 0.0);
 		lights.push(plight1);
+
+		Spotlight spots;
+		spots.position = Vec3(10, 14, 2);
+		spots.radius = 30;
+		spots.direction = Vec3(1.5, 1, 1);
+		spots.cutOff = cos(0.785);
+		spots.diffuse = Vec3(5, 0, 0);
+		lights.push(spots);
+
+		spots.diffuse = Vec3(0, 5, 0);
+		spots.position = Vec3(10, 26, 2);
+		spots.direction = Vec3(1.5, -1, 1);
+		lights.push(spots);
+
+		spots.diffuse = Vec3(0, 0, 5);
+		spots.position = Vec3(10, 14, 8);
+		spots.direction = Vec3(1.5, 1, -1);
+		lights.push(spots);
+
+		spots.diffuse = Vec3(2, 2, 2);
+		spots.position = Vec3(10, 26, 8);
+		spots.direction = Vec3(1.5, -1, -1);
+		lights.push(spots);
+
 
 		uniform.write();
 		lights.write();
 
+		Vec3 ballPos_0 = Vec3(20, 20, 2) + Vec3(sin(timer)*5, cos(timer)*4, sin(timer*1.2));
+		Vec3 ballPos_1 = Vec3(20, 20, 6) + Vec3(sin(timer*2)*3, cos(timer*2)*4, cos(timer*1.4));
 
 		level.draw();
 		aModel.draw(Mat4::translation(2,2,0));
+		ball_0.draw(Mat4::translation(ballPos_0));
+		ball_0.draw(Mat4::translation(ballPos_1));
 
 		//Shadows ------------------------------
 		lights.bind();
@@ -210,6 +246,8 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		level.drawSunShadows(lights);
 		aModel.drawShadow(Mat4::translation(2,2,0), lights);
+		ball_0.drawShadow(Mat4::translation(ballPos_0), lights);
+		ball_0.drawShadow(Mat4::translation(ballPos_1), lights);
 		//Display ------------------------------
 		lights.bindShadowMap();
 		lights.bindEnvironmentMap();

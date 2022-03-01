@@ -468,7 +468,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 48 - ((5 * winheight(0) + 25) / 51)
+let s:l = 48 - ((17 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -1422,12 +1422,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 221 - ((34 * winheight(0) + 25) / 51)
+let s:l = 188 - ((25 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-221
-normal! 039|
+188
+normal! 034|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
@@ -1568,12 +1568,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 97 - ((21 * winheight(0) + 25) / 51)
+let s:l = 154 - ((15 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-97
-normal! 0
+154
+normal! 06|
 wincmd w
 argglobal
 if bufexists("graphics.cpp") | buffer graphics.cpp | else | edit graphics.cpp | endif
@@ -1704,7 +1704,6 @@ normal! zt
 217
 normal! 021|
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
 tabnext
@@ -1973,13 +1972,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 719 - ((17 * winheight(0) + 25) / 51)
+let s:l = 534 - ((10 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-719
+534
 normal! 0
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
 tabnext
@@ -2807,7 +2807,7 @@ normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 7
+tabnext 8
 set stal=1
 badd +1 makefile
 badd +1 main.cpp
@@ -2823,9 +2823,9 @@ badd +1 system.hpp
 badd +192 3Dmaths.cpp
 badd +366 3Dphysics.cpp
 badd +46 entities.cpp
-badd +1 game.cpp
+badd +0 game.cpp
 badd +1 graphics.cpp
-badd +0 shader.cpp
+badd +1 shader.cpp
 badd +1 loaders.cpp
 badd +1 models.cpp
 badd +1 system.cpp

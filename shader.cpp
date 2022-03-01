@@ -186,23 +186,23 @@ std::string glsl_commonLightStructs(){
 		};
 
 		struct Pointlight{
-			vec4 position;//vec3 position, float radius
-			vec3 ambient;
+			vec4 position;	//vec3 position, float radius
+			//vec3 ambient;
 			vec3 diffuse;
 			mat4 view[6];
 		};
 
 		struct Spotlight{
-			vec4 position;//vec3 position, float radius
-			vec4 direction;//vec3 direction, float cutoff
-			vec3 ambient;
+			vec4 position;	//vec3 position, float radius
+			vec4 direction;	//vec3 direction, float cutoff
+			//vec3 ambient;
 			vec3 diffuse;
 			mat4 view;
 		};
 
 		layout(std140, binding = LIGHT_UBO_BINDING) uniform L{
 			Sun sun;
-			vec4 numLights;//r = numPointlights, b = numSpotlights
+			vec4 numLights;	//r = numPointlights, b = numSpotlights
 			Pointlight pointlights[MAX_POINTLIGHTS];
 			Spotlight spotlights[MAX_SPOTLIGHTS];
 		};
@@ -529,8 +529,8 @@ std::string glsl_lightCalculations(){
 		vec3 calcBRDF(vec3 albedo, vec3 radiance, vec3 N, vec3 V, vec3 L, vec3 F0, vec2 metalRough){
 			vec3 H = normalize(V + L);
 
-			float NdotL = max(dot(N, V), 0.0);
-			float NdotV = max(dot(N, L), 0.0);
+			float NdotV = max(dot(N, V), 0.0);
+			float NdotL = max(dot(N, L), 0.0);
 
 			float NDF = distributionGGX(N, H, metalRough.g);
 			float G = geometrySmith(NdotV, NdotL, metalRough.g);
@@ -629,10 +629,10 @@ std::string glsl_lightCalculations(){
 			float diffRatio = max(dot(normal, direction), 0.0);
 			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
 
-			vec3 ambient = light.ambient * albedo * attenuation;
+			//vec3 ambient = light.ambient * albedo * attenuation;
 			vec3 diffuse = light.diffuse * diffRatio * albedo * attenuation;
 
-			vec3 radiance = ambient + diffuse;
+			vec3 radiance = diffuse;
 
 			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
 		}
@@ -666,9 +666,9 @@ std::string glsl_lightCalculations(){
 			float diffRatio = max(dot(normal, direction), 0.0);
 			float attenuation = clamp(1.0 - distSquare / (light.position.a*light.position.a), 0.0, 1.0);
 
-			vec3 ambient = light.ambient * albedo * attenuation;
+			//vec3 ambient = light.ambient * albedo * attenuation;
 
-			vec3 radiance = vec3(0.0);
+			//vec3 radiance = vec3(0.0);
 			
 			float theta = dot(direction, normalize(-light.direction.rgb));
 			if(theta > light.direction.a){
@@ -678,11 +678,11 @@ std::string glsl_lightCalculations(){
 				float epsilon = 0.05;
 				float intensity = clamp((theta - (light.direction.a + epsilon)) / epsilon, 0.0, 1.0);
 
-				radiance = ambient + (1.0 - shadow) * (diffuse * intensity);
+				vec3 radiance = (1.0 - shadow) * (diffuse * intensity);
+				return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
 			}else{
-				radiance = ambient;
+				return vec3(0.0);
 			}
-			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
 		}
 	)";
 	return str;
@@ -817,7 +817,7 @@ std::string glsl_environmentFragment(){
 	void main()
 	{
 		vec4 mapColor = texture(diffuse, vec3(F.uv_coord.x, -F.uv_coord.z, -F.uv_coord.y));
-		outColor = mapColor * 0.9 + vec4(sun.ambient * 0.2 * 0.1, 1.0);
+		outColor = mapColor * 0.9 + vec4(sun.ambient * 0.1, 1.0);
 	}
 	)";
 	return str;

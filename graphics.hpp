@@ -124,8 +124,8 @@ struct Sun{
 struct Pointlight{
 	Vec3 position;
 	float radius;
-	Vec3 ambient;
-		char padding0[4];
+	//Vec3 ambient;
+	//	char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
 	Mat4 projViewCSM[6];
@@ -137,8 +137,8 @@ struct Spotlight{
 	float radius;
 	Vec3 direction;
 	float cutOff;
-	Vec3 ambient;
-		char padding0[4];
+	//Vec3 ambient;
+	//	char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
 	Mat4 projViewCSM;
