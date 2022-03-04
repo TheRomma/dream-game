@@ -248,11 +248,11 @@ std::string glsl_deferredStaticModelVertex(){
 		layout(location = 0) uniform mat4 u_model;
 
 		void main(){
-			vec4 tempPos = u_model * vec4(POSITION, 1.0);
-			vec4 result = projView * tempPos;
+			vec4 transform = u_model * vec4(POSITION, 1.0);
+			vec4 result = projView * transform;
 			gl_Position = result;
 
-			F.position = vec4(tempPos.rgb, result.z);
+			F.position = vec4(transform.rgb/transform.a, result.z);
 			F.uv_coord = UV_COORD;
 			F.normal = normalize(mat3(transpose(inverse(u_model))) * NORMAL.xyz);
 		}
@@ -328,6 +328,7 @@ std::string glsl_allModelShadowFragment(){
 
 	void main(){
 		float alpha = texture(u_diffuse, F.uv_coord).a;
+		/*
 		if(alpha < 1.0){
 			if(noise(gl_FragCoord.xyz) < alpha){
 				discard;
@@ -336,6 +337,10 @@ std::string glsl_allModelShadowFragment(){
 			}
 		}else{
 			//Empty
+		}
+		*/
+		if(alpha < 1.0){
+			discard;
 		}
 	}
 	)";	
@@ -388,20 +393,23 @@ std::string glsl_deferredAnimatedModelVertex(Uint32 numBones){
 		} F;
 
 		layout(location = 0) uniform mat4 u_model;
-		layout(location = 1) uniform mat4 u_joints[NUM_BONES];
+		layout(location = 2) uniform mat4 u_joints[NUM_BONES];
 
 		void main(){
+			
 			vec4 transform = u_model * (
 				u_joints[int(BONES.r)] * vec4(POSITION, 1.0) * WEIGHTS.r +
 				u_joints[int(BONES.g)] * vec4(POSITION, 1.0) * WEIGHTS.g +
 				u_joints[int(BONES.b)] * vec4(POSITION, 1.0) * WEIGHTS.b +
 				u_joints[int(BONES.a)] * vec4(POSITION, 1.0) * WEIGHTS.a
 			);
+			
 			vec4 result = projView * transform;
 			gl_Position = result;
 
-			F.position = vec4(transform.rgb, result.z);
+			F.position = vec4(transform.rgb/transform.a, result.z);
 			F.uv_coord = UV_COORD;
+			
 			F.normal = normalize(mat3(transpose(inverse(u_model))) * (
 				mat3(transpose(inverse(u_joints[int(BONES.r)]))) * NORMAL.xyz * WEIGHTS.r +
 				mat3(transpose(inverse(u_joints[int(BONES.g)]))) * NORMAL.xyz * WEIGHTS.g +
@@ -426,17 +434,24 @@ std::string glsl_animatedModelShadowVertex(Uint32 numBones){
 	layout(location = 3) in vec4 BONES;
 	layout(location = 4) in vec4 WEIGHTS;
 
+	out VS_OUT{
+		vec3 uv_coord;
+	} F;
+
 	layout(location = 0) uniform mat4 u_model;
 	layout(location = 1) uniform mat4 u_lightSpace;
 	layout(location = 2) uniform mat4 u_joints[NUM_BONES];
 
 	void main(){
-		gl_Position = u_lightSpace * u_model * (
+		
+		vec4 pos = u_model * (
 			u_joints[int(BONES.r)] * vec4(POSITION, 1.0) * WEIGHTS.r +
 			u_joints[int(BONES.g)] * vec4(POSITION, 1.0) * WEIGHTS.g +
 			u_joints[int(BONES.b)] * vec4(POSITION, 1.0) * WEIGHTS.b +
 			u_joints[int(BONES.a)] * vec4(POSITION, 1.0) * WEIGHTS.a
 		);
+		gl_Position = u_lightSpace * pos;
+		F.uv_coord = UV_COORD;
 	}
 	)";	
 	str.replace(
@@ -555,7 +570,7 @@ std::string glsl_lightCalculations(){
 			for(int i=-1;i<=1;i++){
 				for(int j=-1;j<=1;j++){
 					pcfDepth = texture(shadowMap, vec3((projectedPos.xy + vec2(i,j) * texelSize), float(mapIndex))).r;
-					shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
+					shadow += (currentDepth) > (pcfDepth) ? 1.0 : 0.0;
 				}
 			}
 
@@ -710,7 +725,7 @@ std::string glsl_deferredLightPassFragment(){
 
 	void main(){
 
-		//vec3 shadowTest = texture(u_shadowMap, vec3(F.uv_coord, 4.0)).rgb;
+		vec3 shadowTest = texture(u_shadowMap, vec3(F.uv_coord, 4.0)).rgb;
 		vec4 normal = texture(u_normal, F.uv_coord).rgba;
 		if(normal.rgb != vec3(0.0, 0.0, 0.0)){
 
@@ -759,6 +774,7 @@ std::string glsl_deferredLightPassFragment(){
 
 			}
 			outColor = vec4(result.rgb, 1.0);
+			//outColor = vec4(position.rgb, 1.0);
 
 		}else{
 

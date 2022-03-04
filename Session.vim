@@ -468,12 +468,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 48 - ((17 * winheight(0) + 25) / 51)
+let s:l = 73 - ((5 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-48
-normal! 07|
+73
+normal! 053|
 wincmd w
 argglobal
 if bufexists("3Dmaths.cpp") | buffer 3Dmaths.cpp | else | edit 3Dmaths.cpp | endif
@@ -1422,12 +1422,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 188 - ((25 * winheight(0) + 25) / 51)
+let s:l = 119 - ((38 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-188
-normal! 034|
+119
+normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
@@ -1697,13 +1697,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 217 - ((31 * winheight(0) + 25) / 51)
+let s:l = 419 - ((10 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-217
-normal! 021|
+419
+normal! 044|
 wincmd w
+2wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
 tabnext
@@ -1972,14 +1973,13 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 534 - ((10 * winheight(0) + 25) / 51)
+let s:l = 750 - ((24 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-534
-normal! 0
+750
+normal! 0116|
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
 tabnext
@@ -2523,12 +2523,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 218 - ((50 * winheight(0) + 25) / 51)
+let s:l = 154 - ((25 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-218
-normal! 0
+154
+normal! 024|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 60 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 150 + 105) / 211)
@@ -2798,7 +2798,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 84 - ((35 * winheight(0) + 25) / 51)
+let s:l = 84 - ((17 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -2807,7 +2807,7 @@ normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 8
+tabnext 7
 set stal=1
 badd +1 makefile
 badd +1 main.cpp

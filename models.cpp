@@ -151,7 +151,7 @@ void AnimatedModel::pose(Animation& anim, float time){
 void AnimatedModel::draw(Mat4 model){
 	gProgram.use();
 	glUniformMatrix4fv(0, 1, false, model.ptr());
-	glUniformMatrix4fv(1, numBones, false, joints[0].ptr());
+	glUniformMatrix4fv(2, numBones, false, joints[0].ptr());
 	buffer.bind();
 	material.bind(0);
 
