@@ -34,6 +34,20 @@ struct BoundingSphere{
 	float verticalAspect;
 };
 
+//Swept bounding sphere
+struct SweptSphere{
+	SweptSphere(){};
+	SweptSphere(Vec3 center, float radius, float aspect);
+	~SweptSphere(){};
+
+	Vec3 furthest(Vec3 direction);
+	BoundingSphere* getNext();
+	void swapSpheres();
+
+	BoundingSphere colliders[2];
+	Uint8 toggle;
+};
+
 //Convex collider for GJK / EPA
 struct BoundingConvex{
 	BoundingConvex(){};

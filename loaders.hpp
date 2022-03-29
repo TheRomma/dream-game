@@ -9,6 +9,8 @@ struct StaticModelLoader{
 	StaticModelLoader(const char* filename);
 	~StaticModelLoader();
 
+	bool loaded = false;
+
 	//Attribute data.
 	Uint32 attribLength;	//Length of attribute data in bytes.
 	float* attributes;		//Attribute data like positions, normals, etc.
@@ -29,6 +31,8 @@ struct StaticModelLoader{
 struct AnimatedModelLoader{
 	AnimatedModelLoader(const char* filename);
 	~AnimatedModelLoader();
+
+	bool loaded = false;
 
 	//Attribute data.
 	Uint32 attribLength;	//Length of attribute data in bytes.
@@ -53,6 +57,8 @@ struct AnimatedModelLoader{
 struct AnimationLoader{
 	AnimationLoader(const char* filename);
 	~AnimationLoader();
+
+	bool loaded = false;
 	
 	//Animation data.
 	Uint32 numFrames;		//Number of frames.
@@ -68,6 +74,8 @@ struct PhysicsMeshLoader{
 	PhysicsMeshLoader(const char* filename);
 	~PhysicsMeshLoader();
 
+	bool loaded = false;
+
 	//Physics mesh data.
 	Uint32 numConvexes;		//Number of convexes in the mesh.
 	
@@ -82,6 +90,8 @@ struct PhysicsMeshLoader{
 struct EnvironmentMapLoader{
 	EnvironmentMapLoader(const char* filename);
 	~EnvironmentMapLoader();
+
+	bool loaded = false;
 
 	//Material data.
 	Uint32 texWidth;		//Width of material texture.

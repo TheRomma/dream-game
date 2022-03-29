@@ -61,7 +61,7 @@ void Clock::update(){
 //--------------------------------------------------------------------------------------------------------
 
 //SDL Window wrapper init.
-void Window::init(const char* title, Uint32 width, Uint32 height, Uint32 flags){
+bool Window::init(const char* title, Uint32 width, Uint32 height, Uint32 flags){
 	this->width = width;
 	this->height = height;
 
@@ -74,7 +74,11 @@ void Window::init(const char* title, Uint32 width, Uint32 height, Uint32 flags){
 	context = SDL_GL_CreateContext(window);
 
 	glewExperimental = true;
-	glewInit();
+	if(glewInit() != GLEW_OK){
+		return false;
+	}
+
+	return true;
 }
 
 //Window wrapper destructor.

@@ -37,7 +37,7 @@ struct Clock{
 //SDL Window & OpenGL context.
 struct Window{
 	Window(){};
-	void init(const char* title, Uint32 width, Uint32 height, Uint32 flags);
+	bool init(const char* title, Uint32 width, Uint32 height, Uint32 flags);
 	~Window();
 
 	void vsync(Uint32 setting);

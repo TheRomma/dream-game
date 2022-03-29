@@ -21,7 +21,8 @@ struct C_Physics{
 	void handleCollision(CollisionHandler& handler, PhysicsMesh& mesh);
 
 	float gravVelocity;
-	BoundingSphere collider;
+	//BoundingSphere collider;
+	SweptSphere collider;
 	bool onGround;
 };
 

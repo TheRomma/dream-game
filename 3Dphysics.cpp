@@ -316,6 +316,49 @@ Vec3 BoundingSphere::furthest(Vec3 direction){
 	return center + result;
 }
 
+//Swept sphere collider
+SweptSphere::SweptSphere(Vec3 center, float radius, float aspect){
+	colliders[0].center = center;
+	colliders[0].radius = radius;
+	colliders[0].verticalAspect = aspect;
+
+	colliders[1].center = center;
+	colliders[1].radius = radius;
+	colliders[1].verticalAspect = aspect;
+
+	toggle = 1;
+}
+
+//Swept sphere furthest point.
+Vec3 SweptSphere::furthest(Vec3 direction){
+	Vec3 dir = Vec3::normalize(direction);
+
+	Vec3 result0 = dir * colliders[0].radius;
+	result0.z = result0.z * colliders[0].verticalAspect;
+	result0 = result0 + colliders[0].center;
+
+	Vec3 result1 = dir * colliders[1].radius;
+	result1.z = result1.z * colliders[1].verticalAspect;
+	result1 = result1 + colliders[1].center;
+
+	if(Vec3::dot(dir, result0) >= Vec3::dot(dir, result1)){
+		return result0;
+	}else{
+		return result1;
+	}
+}
+
+BoundingSphere* SweptSphere::getNext(){
+	return &colliders[toggle];
+}
+
+void SweptSphere::swapSpheres(){
+	toggle += 1;
+	if(toggle > 1){
+		toggle = 0;
+	}
+}
+
 //------------------------------------------------------------------------------------
 
 //Convex collider.

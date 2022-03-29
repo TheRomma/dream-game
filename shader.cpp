@@ -279,6 +279,7 @@ std::string glsl_deferredAllModelFragment(){
 		void main(){
 			vec4 diffColor = texture(u_diffuse, F.uv_coord).rgba;
 			if(diffColor.a < 1.0){
+				/*
 				if(noise(gl_FragCoord.xyz) < diffColor.a){
 					gPosition = F.position;
 					vec2 metalRough = texture(u_metalRough, F.uv_coord).rg;
@@ -287,6 +288,8 @@ std::string glsl_deferredAllModelFragment(){
 				}else{
 					discard;
 				}
+				*/
+				discard;
 			}else{
 				gPosition = F.position;
 				vec2 metalRough = texture(u_metalRough, F.uv_coord).rg;
@@ -356,7 +359,7 @@ std::string glsl_allModelShadowGeometry(){
 	layout(triangle_strip, max_vertices = 3) out;
 	
 	void main(){
-		for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
+		for(int i=0;i<NUM_SUN_CASCADES;i++){
 			gl_Position = 
 				sun.view[gl_InvocationID] * gl_in[i].gl_Position;
 			gl_Layer = gl_InvocationID;
@@ -754,7 +757,7 @@ std::string glsl_deferredLightPassFragment(){
 				result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_shadowMap);
 
 				//Pointlights
-				for(unsigned int i=0;i<numLights.r;i++){
+				for(int i=0;i<numLights.r;i++){
 					result += calcPointlight(pointlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
 				}
 

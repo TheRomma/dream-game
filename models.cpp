@@ -1,8 +1,11 @@
 #include "models.hpp"
 #include "loaders.hpp"
 
-void Animation::init(const char* filename){
+bool Animation::init(const char* filename){
 	AnimationLoader file(filename);
+	if(!file.loaded){
+		return false;
+	}
 
 	numFrames = file.numFrames;
 	numBones = file.numBones;
@@ -12,10 +15,14 @@ void Animation::init(const char* filename){
 	memcpy(transforms, file.animation, file.animLength);
 
 	duration = (numFrames - 1) / (24.0f / animRate);
+
+	return true;
 }
 
 Animation::~Animation(){
-	free(transforms);
+	if(transforms){
+		free(transforms);
+	}
 }
 
 Mat4 Animation::calcJoint(Uint32 boneIndex, float time){
@@ -50,8 +57,11 @@ Mat4 Animation::calcJoint(Uint32 boneIndex, float time){
 //---------------------------------------------------------------------------------------------
 
 //Create a drawable 3d model.
-void StaticModel::init(const char* filename){
+bool StaticModel::init(const char* filename){
 	StaticModelLoader file(filename);
+	if(!file.loaded){
+		return false;
+	}
 
 	gProgram.init(
 		(glsl_header() + glsl_commonUniforms() + glsl_deferredStaticModelVertex()).c_str(),
@@ -70,6 +80,8 @@ void StaticModel::init(const char* filename){
 	buffer.setAttribute(2, 3);
 
 	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse, file.metalRough);
+
+	return true;
 }
 
 //Draw the 3d model onto g-buffers.
@@ -109,8 +121,11 @@ void StaticModel::drawShadow(Mat4 model, LightUniforms& lights){
 //------------------------------------------------------------------------------------
 
 //Create a drawable 3d model.
-void AnimatedModel::init(const char* filename){
+bool AnimatedModel::init(const char* filename){
 	AnimatedModelLoader file(filename);
+	if(!file.loaded){
+		return false;
+	}
 
 	numBones = file.numBones;
 
@@ -138,6 +153,8 @@ void AnimatedModel::init(const char* filename){
 	for(unsigned int i=0;i<numBones;i++){
 		joints[i] = Mat4::identity();
 	}
+
+	return true;
 }
 
 //Pose animated model.
@@ -186,8 +203,11 @@ void AnimatedModel::drawShadow(Mat4 model, LightUniforms& lights){
 //------------------------------------------------------------------------------------
 
 //Physics mesh init.
-void PhysicsMesh::init(const char* filename){
+bool PhysicsMesh::init(const char* filename){
 	PhysicsMeshLoader file(filename);
+	if(!file.loaded){
+		return false;
+	}
 
 	numConvexes = file.numConvexes;
 	
@@ -203,6 +223,8 @@ void PhysicsMesh::init(const char* filename){
 		convexes[i] = BoundingConvex(&vertices[counter], indices[i]);
 		counter += indices[i];
 	}
+
+	return true;
 }
 
 //Physics mesh destructor.

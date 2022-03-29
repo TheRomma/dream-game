@@ -3,7 +3,7 @@
 C_Physics::C_Physics(float radius, float aspect, Vec3 centerPos){
 	gravVelocity = 0;
 	onGround = false;
-	collider = BoundingSphere(centerPos, radius, aspect);
+	collider = SweptSphere(centerPos, radius, aspect);
 }
 
 void C_Physics::updateGravity(float delta){
@@ -11,7 +11,7 @@ void C_Physics::updateGravity(float delta){
 }
 
 void C_Physics::handleGravity(float delta){
-	collider.center.z += gravVelocity * delta * 2.5;
+	collider.getNext()->center.z += gravVelocity * delta * 2.5;
 }
 
 void C_Physics::handleCollision(CollisionHandler& handler, PhysicsMesh& mesh){
@@ -31,7 +31,7 @@ void C_Physics::handleCollision(CollisionHandler& handler, PhysicsMesh& mesh){
 			}else{
 				gravVelocity -= gravVelocity * normal.z * normal.z * 0.03;
 			}
-			collider.center = collider.center + normal * distance;
+			collider.getNext()->center = collider.getNext()->center + normal * distance;
 		}
 	}
 }
@@ -60,13 +60,14 @@ void Player::input(float delta, Keyboard& kb){
 }
 
 void Player::update(float delta, CollisionHandler& handler, PhysicsMesh& mesh){
-	physics.collider.center = position + Vec3(0,0,1);
+	physics.collider.swapSpheres();
+	physics.collider.getNext()->center = position + Vec3(0,0,1);
 
 	physics.updateGravity(delta);
 	physics.handleCollision(handler, mesh);
 	physics.handleGravity(delta);
 
-	position = physics.collider.center + Vec3(0,0,-1);
+	position = physics.collider.getNext()->center + Vec3(0,0,-1);
 	camera.position = position + Vec3(0,0,1.8);
 }
 

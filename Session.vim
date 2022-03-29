@@ -325,12 +325,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 13 - ((12 * winheight(0) + 26) / 52)
+let s:l = 56 - ((40 * winheight(0) + 26) / 52)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-13
-normal! 020|
+56
+normal! 02|
 tabnext
 edit 3Dmaths.hpp
 set splitbelow splitright
@@ -743,12 +743,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 49 - ((24 * winheight(0) + 25) / 51)
+let s:l = 45 - ((32 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-49
-normal! 0
+45
+normal! 021|
 wincmd w
 argglobal
 if bufexists("3Dphysics.cpp") | buffer 3Dphysics.cpp | else | edit 3Dphysics.cpp | endif
@@ -872,11 +872,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 354 - ((7 * winheight(0) + 25) / 51)
+let s:l = 360 - ((36 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-354
+360
 normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 87 + 105) / 211)
@@ -1018,12 +1018,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 48 - ((38 * winheight(0) + 25) / 51)
+let s:l = 25 - ((21 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-48
-normal! 045|
+25
+normal! 025|
 wincmd w
 argglobal
 if bufexists("entities.cpp") | buffer entities.cpp | else | edit entities.cpp | endif
@@ -1147,12 +1147,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 83 - ((37 * winheight(0) + 25) / 51)
+let s:l = 53 - ((42 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-83
-normal! 045|
+53
+normal! 030|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 87 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 123 + 105) / 211)
@@ -1422,11 +1422,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 119 - ((38 * winheight(0) + 25) / 51)
+let s:l = 64 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-119
+64
 normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
@@ -1568,11 +1568,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 154 - ((15 * winheight(0) + 25) / 51)
+let s:l = 168 - ((29 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-154
+168
 normal! 06|
 wincmd w
 argglobal
@@ -1697,14 +1697,13 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 419 - ((10 * winheight(0) + 25) / 51)
+let s:l = 460 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-419
-normal! 044|
+460
+normal! 067|
 wincmd w
-2wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 131 + 105) / 211)
 tabnext
@@ -1844,7 +1843,7 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 46 - ((45 * winheight(0) + 25) / 51)
+let s:l = 46 - ((15 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -1973,12 +1972,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 750 - ((24 * winheight(0) + 25) / 51)
+let s:l = 326 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-750
-normal! 0116|
+326
+normal! 017|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
@@ -2119,11 +2118,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 70 - ((18 * winheight(0) + 25) / 51)
+let s:l = 66 - ((20 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-70
+66
 normal! 0
 wincmd w
 argglobal
@@ -2248,12 +2247,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 209 - ((31 * winheight(0) + 25) / 51)
+let s:l = 46 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-209
-normal! 021|
+46
+normal! 0
 wincmd w
 exe 'vert 1resize ' . ((&columns * 84 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 126 + 105) / 211)
@@ -2394,12 +2393,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 76 - ((24 * winheight(0) + 25) / 51)
+let s:l = 67 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-76
-normal! 0
+67
+normal! 08|
 wincmd w
 argglobal
 if bufexists("models.cpp") | buffer models.cpp | else | edit models.cpp | endif
@@ -2523,12 +2522,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 154 - ((25 * winheight(0) + 25) / 51)
+let s:l = 46 - ((45 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-154
-normal! 024|
+46
+normal! 05|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 60 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 150 + 105) / 211)
@@ -2669,12 +2668,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 52 - ((27 * winheight(0) + 25) / 51)
+let s:l = 40 - ((15 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-52
-normal! 024|
+40
+normal! 08|
 wincmd w
 argglobal
 if bufexists("system.cpp") | buffer system.cpp | else | edit system.cpp | endif
@@ -2798,19 +2797,19 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 84 - ((17 * winheight(0) + 25) / 51)
+let s:l = 64 - ((9 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-84
-normal! 0
+64
+normal! 04|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 7
+tabnext 2
 set stal=1
 badd +1 makefile
-badd +1 main.cpp
+badd +0 main.cpp
 badd +1 3Dmaths.hpp
 badd +1 3Dphysics.hpp
 badd +1 entities.hpp
@@ -2823,7 +2822,7 @@ badd +1 system.hpp
 badd +192 3Dmaths.cpp
 badd +366 3Dphysics.cpp
 badd +46 entities.cpp
-badd +0 game.cpp
+badd +1 game.cpp
 badd +1 graphics.cpp
 badd +1 shader.cpp
 badd +1 loaders.cpp

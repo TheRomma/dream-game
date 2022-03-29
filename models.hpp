@@ -14,7 +14,7 @@ struct Joint{
 //Skeletal animation.
 struct Animation{
 	Animation(){};
-	void init(const char* filename);
+	bool init(const char* filename);
 	~Animation();
 
 	Mat4 calcJoint(Uint32 bone, float time);
@@ -32,7 +32,7 @@ struct Animation{
 //A drawable 3d model.
 struct StaticModel{
 	StaticModel(){};
-	void init(const char* filename);
+	bool init(const char* filename);
 	~StaticModel(){};
 
 	void draw(Mat4 model);
@@ -47,7 +47,7 @@ struct StaticModel{
 //A drawable 3d model.
 struct AnimatedModel{
 	AnimatedModel(){};
-	void init(const char* filename);
+	bool init(const char* filename);
 	~AnimatedModel(){};
 
 	void pose(Animation& anim, float time);
@@ -66,7 +66,7 @@ struct AnimatedModel{
 //Physics mesh
 struct PhysicsMesh{
 	PhysicsMesh(){};	
-	void init(const char* filename);
+	bool init(const char* filename);
 	~PhysicsMesh();	
 
 	Uint32 numConvexes;

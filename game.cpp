@@ -28,7 +28,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	CollisionHandler physics;
 
 	Player player;
-	player.init(Vec3(2,8,1), -1.57);
+	player.init(Vec3(2,8,1), 1.57);
 
 	Level level;
 	level.init("res/tech_demo");
