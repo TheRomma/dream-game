@@ -1422,12 +1422,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 64 - ((45 * winheight(0) + 25) / 51)
+let s:l = 270 - ((39 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-64
-normal! 0
+270
+normal! 028|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 59 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 151 + 105) / 211)
@@ -1568,12 +1568,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 168 - ((29 * winheight(0) + 25) / 51)
+let s:l = 199 - ((36 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-168
-normal! 06|
+199
+normal! 038|
 wincmd w
 argglobal
 if bufexists("graphics.cpp") | buffer graphics.cpp | else | edit graphics.cpp | endif
@@ -1697,11 +1697,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 460 - ((45 * winheight(0) + 25) / 51)
+let s:l = 482 - ((35 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-460
+482
 normal! 067|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 79 + 105) / 211)
@@ -1720,8 +1720,8 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
+exe 'vert 1resize ' . ((&columns * 70 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 140 + 105) / 211)
 argglobal
 setlocal keymap=
 setlocal noarabic
@@ -1843,12 +1843,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 46 - ((15 * winheight(0) + 25) / 51)
+let s:l = 82 - ((42 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-46
-normal! 030|
+82
+normal! 028|
 wincmd w
 argglobal
 if bufexists("shader.cpp") | buffer shader.cpp | else | edit shader.cpp | endif
@@ -1972,15 +1972,16 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-let s:l = 326 - ((45 * winheight(0) + 25) / 51)
+let s:l = 860 - ((24 * winheight(0) + 25) / 51)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-326
-normal! 017|
+860
+normal! 043|
 wincmd w
-exe 'vert 1resize ' . ((&columns * 86 + 105) / 211)
-exe 'vert 2resize ' . ((&columns * 124 + 105) / 211)
+2wincmd w
+exe 'vert 1resize ' . ((&columns * 70 + 105) / 211)
+exe 'vert 2resize ' . ((&columns * 140 + 105) / 211)
 tabnext
 edit loaders.hpp
 set splitbelow splitright
@@ -2806,10 +2807,10 @@ normal! 04|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 81 + 105) / 211)
 exe 'vert 2resize ' . ((&columns * 129 + 105) / 211)
-tabnext 2
+tabnext 8
 set stal=1
 badd +1 makefile
-badd +0 main.cpp
+badd +1 main.cpp
 badd +1 3Dmaths.hpp
 badd +1 3Dphysics.hpp
 badd +1 entities.hpp
@@ -2824,7 +2825,7 @@ badd +366 3Dphysics.cpp
 badd +46 entities.cpp
 badd +1 game.cpp
 badd +1 graphics.cpp
-badd +1 shader.cpp
+badd +0 shader.cpp
 badd +1 loaders.cpp
 badd +1 models.cpp
 badd +1 system.cpp

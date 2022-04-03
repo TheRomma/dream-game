@@ -75,3 +75,10 @@ std::string glsl_deferredLightPassFragment();
 //Shaders for displaying environment maps.
 std::string glsl_environmentVertex();
 std::string glsl_environmentFragment();
+
+//Post processing shaders.
+std::string glsl_bloomFragment();
+std::string glsl_kernelFragment();
+std::string glsl_gaussianBlurFragment();
+
+std::string glsl_combineFragment();

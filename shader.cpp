@@ -189,7 +189,6 @@ std::string glsl_commonLightStructs(){
 			vec4 position;	//vec3 position, float radius
 			//vec3 ambient;
 			vec3 diffuse;
-			mat4 view[6];
 		};
 
 		struct Spotlight{
@@ -838,6 +837,113 @@ std::string glsl_environmentFragment(){
 		vec4 mapColor = texture(diffuse, vec3(F.uv_coord.x, -F.uv_coord.z, -F.uv_coord.y));
 		outColor = mapColor * 0.9 + vec4(sun.ambient * 0.1, 1.0);
 	}
+	)";
+	return str;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+std::string glsl_bloomFragment(){
+	std::string str = R"(
+		out vec4 outColor;
+
+		in VS_OUT{
+			vec2 uv_coord;
+		}F;
+
+		layout(binding = 0) uniform sampler2D u_image;
+
+		void main(){
+			vec3 color = texture(u_image, F.uv_coord).rgb;
+			float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722)); 
+			if(brightness > 1.0){
+				outColor = vec4(color * 0.1, 1.0);
+			}else{
+				outColor = vec4(0.0, 0.0, 0.0, 1.0);
+			}
+		}
+	)";
+	return str;
+}
+
+std::string glsl_kernelFragment(){
+	std::string str = R"(
+		out vec4 outColor;
+
+		in VS_OUT{
+			vec2 uv_coord;
+		}F;
+
+		layout(binding = 0) uniform sampler2D u_image;
+		layout(location = 1) uniform mat3 u_kernel;
+
+		void main(){
+			vec2 texelSize = 1.0 / textureSize(u_image, 0).xy;
+			vec3 color = vec3(0.0);
+
+			for(int i=0;i<3;i++){
+				for(int j=0;j<3;j++){
+					color += u_kernel[j][i] * texture(u_image, (F.uv_coord + vec2(texelSize.x * (i - 1), texelSize.y * (j - 1)))).rgb;
+				}
+			}
+
+
+			outColor = vec4(color, 1.0);
+		}
+	)";
+	return str;
+}
+
+std::string glsl_gaussianBlurFragment(){
+	std::string str = R"(
+		out vec4 outColor;
+
+		in VS_OUT{
+			vec2 uv_coord;
+		}F;
+
+		layout(binding = 0) uniform sampler2D u_image;
+		layout(location = 1) uniform bool u_horizontal;
+
+		uniform float weights[5] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+
+		void main(){
+			vec2 texelSize = 1.0 / textureSize(u_image, 0).xy;
+			vec3 color = texture(u_image, F.uv_coord).rgb * weights[0];
+
+			if(u_horizontal){
+				for(int i=1;i<5;i++){
+					color += texture(u_image, F.uv_coord + vec2(texelSize.x * i, 0.0)).rgb * weights[i];
+					color += texture(u_image, F.uv_coord - vec2(texelSize.x * i, 0.0)).rgb * weights[i];
+				}
+			}else{
+				for(int i=1;i<5;i++){
+					color += texture(u_image, F.uv_coord + vec2(0.0, texelSize.y * i)).rgb * weights[i];
+					color += texture(u_image, F.uv_coord - vec2(0.0, texelSize.y * i)).rgb * weights[i];
+				}
+			}
+
+			outColor = vec4(color, 1.0);
+		}
+	)";
+	return str;
+}
+
+std::string glsl_combineFragment(){
+	std::string str = R"(
+		out vec4 outColor;
+
+		in VS_OUT{
+			vec2 uv_coord;
+		}F;
+
+		layout(binding = 0) uniform sampler2D u_imgFirst;
+		layout(binding = 1) uniform sampler2D u_imgSecond;
+
+		void main(){
+			outColor = vec4(texture(u_imgFirst, F.uv_coord).rgb + texture(u_imgSecond, F.uv_coord).rgb, 1.0);
+			//outColor = vec4(texture(u_imgFirst, F.uv_coord).rgb, 1.0);
+		}
 	)";
 	return str;
 }

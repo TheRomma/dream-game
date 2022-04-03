@@ -261,6 +261,14 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		lights.displayEnvironmentMap();
 		target->draw();
 
+		float kernel[9] = {
+			 1.0, 1.1, 1.0,
+			 1.1,-8.1, 1.1,
+			 1.0, 1.1, 1.0
+		};
+		//target->applyKernel(kernel);
+		target->applyBloom(5);
+
 		target->display(window->width, window->height);
 
 		window->swap();

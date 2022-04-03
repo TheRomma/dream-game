@@ -128,7 +128,6 @@ struct Pointlight{
 	//	char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
-	Mat4 projViewCSM[6];
 };
 
 //Spotlight data.
@@ -188,6 +187,8 @@ struct DeferredTarget{
 	void bind();
 	void bindDisplay();
 	void draw();
+	void applyBloom(Uint32 blurPasses);
+	void applyKernel(float* kernel);
 	void display(Uint32 width, Uint32 height);
 
 	Uint32 width, height;
@@ -195,6 +196,8 @@ struct DeferredTarget{
 	private:
 	Uint32 gBuffer, gPosition, gNormal, gAlbedo, depthStencil;
 	Uint32 displayBuffer, displayImage;
-	Shader deferredProgram, displayProgram;
+	Uint32 postBuffer[2], postImage[2];
+	Shader deferredProgram, displayProgram, bloomProgram,
+		kernelProgram, gaussianBlurProgram, combineProgram;
 	VertexBuffer buffer;
 };

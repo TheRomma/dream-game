@@ -455,10 +455,32 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	//Final display image.
 	glGenTextures(1, &displayImage);
 	glBindTexture(GL_TEXTURE_2D, displayImage);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, displayImage, 0);
+
+	//Post processing frame.
+	glGenFramebuffers(2, postBuffer);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[0]);
+
+	//Post processing image.
+	glGenTextures(2, postImage);
+
+	glBindTexture(GL_TEXTURE_2D, postImage[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postImage[0], 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1]);
+
+	glBindTexture(GL_TEXTURE_2D, postImage[1]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postImage[1], 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -472,6 +494,26 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	displayProgram.init(
 		(glsl_header() + glsl_displayQuadVertex()).c_str(),
 		(glsl_header() + glsl_commonUniforms() + glsl_displayQuadFragment()).c_str()
+	);
+
+	bloomProgram.init(
+		(glsl_header() + glsl_displayQuadVertex()).c_str(),
+		(glsl_header() + glsl_bloomFragment()).c_str()
+	);
+
+	kernelProgram.init(
+		(glsl_header() + glsl_displayQuadVertex()).c_str(),
+		(glsl_header() + glsl_kernelFragment()).c_str()
+	);
+
+	gaussianBlurProgram.init(
+		(glsl_header() + glsl_displayQuadVertex()).c_str(),
+		(glsl_header() + glsl_gaussianBlurFragment()).c_str()
+	);
+
+	combineProgram.init(
+		(glsl_header() + glsl_displayQuadVertex()).c_str(),
+		(glsl_header() + glsl_combineFragment()).c_str()
 	);
 
 	//Setup vertex buffer.
@@ -497,8 +539,10 @@ DeferredTarget::~DeferredTarget(){
 		glDeleteTextures(1, &gAlbedo);
 		glDeleteTextures(1, &depthStencil);
 		glDeleteTextures(1, &displayImage);
+		glDeleteTextures(2, postImage);
 		glDeleteFramebuffers(1, &gBuffer);
 		glDeleteFramebuffers(1, &displayBuffer);
+		glDeleteFramebuffers(2, postBuffer);
 	}
 }
 
@@ -519,8 +563,6 @@ void DeferredTarget::draw(){
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
 
@@ -533,6 +575,94 @@ void DeferredTarget::draw(){
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void DeferredTarget::applyBloom(Uint32 blurPasses){
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glViewport(0, 0, width, height);
+	buffer.bind();
+	
+	//Separate overflowing colors.
+	bloomProgram.use();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[0]);	
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, displayImage);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	//Heavily blur resulting image.
+	gaussianBlurProgram.use();
+	
+	unsigned int horizontal = 0;
+	for(unsigned int i=0;i<blurPasses*2;i++){
+		glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1 - horizontal]);
+		glUniform1i(1, horizontal);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, postImage[horizontal]);
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		horizontal++;
+		if(horizontal > 1){
+			horizontal = 0;
+		}
+	}
+	
+	//Combine results with original image.
+	combineProgram.use();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1]);
+	
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, displayImage);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, postImage[0]);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	//Push final image into display buffer.
+	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
+
+	displayProgram.use();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, postImage[1]);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void DeferredTarget::applyKernel(float* kernel){
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_CULL_FACE);
+
+	glViewport(0, 0, width, height);
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[0]);
+	
+	kernelProgram.use();
+	buffer.bind();
+
+	glUniformMatrix3fv(1, 1, 0, kernel);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, displayImage);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glViewport(0, 0, width, height);
+	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
+
+	displayProgram.use();
+	buffer.bind();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, postImage[0]);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
