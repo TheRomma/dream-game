@@ -88,6 +88,7 @@ struct CSM{
 	void bind();
 	void bindTexture(Uint32 base);
 	void bindLayer(Uint32 layer);
+	void clear(Uint32 numSun, Uint32 numSpot);
 
 	Uint32 width, height, numMaps;
 
@@ -95,7 +96,7 @@ struct CSM{
 	Uint32 frame, depth;
 };
 
-//Environment map
+//Environment map.
 struct EnvironmentMap{
 	EnvironmentMap(){};
 	void init(const char* filename);
@@ -109,6 +110,19 @@ struct EnvironmentMap{
 	VertexBuffer buffer;
 };
 
+//Procedural sky.
+struct ProceduralSky{
+	ProceduralSky(){};
+	void init();
+	~ProceduralSky(){};
+
+	void draw();
+
+	private:
+	Shader program;
+	VertexBuffer buffer;
+};
+
 //Sun data.
 struct Sun{
 	Vec3 direction;
@@ -117,15 +131,13 @@ struct Sun{
 		char padding1[4];
 	Vec3 diffuse;
 		char padding2[4];
-	Mat4 projViewCSM[SUN_NUM_SHADOW_CASCADES];
+	Mat4 projViewCSM[NUM_SUN_CASCADES];
 };
 
 //Pointlight data.
 struct Pointlight{
 	Vec3 position;
 	float radius;
-	//Vec3 ambient;
-	//	char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
 };
@@ -136,8 +148,6 @@ struct Spotlight{
 	float radius;
 	Vec3 direction;
 	float cutOff;
-	//Vec3 ambient;
-	//	char padding0[4];
 	Vec3 diffuse;
 		char padding1[4];
 	Mat4 projViewCSM;
@@ -166,9 +176,10 @@ struct LightUniforms{
 	void push(Spotlight light);
 	void pushStatic(Pointlight* points, Uint32 numPoints, Spotlight* spots, Uint32 numSpots);
 	void write();
-	void calcShadowProjections(Vec3 position);
+	void calcShadowProjections(Vec3 position, Vec3 direction);
 	void bindShadowFrame();
 	void bindShadowMap();
+	void clearShadowMap();
 	void bindEnvironmentMap();
 	void displayEnvironmentMap();
 
@@ -196,8 +207,8 @@ struct DeferredTarget{
 	private:
 	Uint32 gBuffer, gPosition, gNormal, gAlbedo, depthStencil;
 	Uint32 displayBuffer, displayImage;
-	Uint32 postBuffer[2], postImage[2];
-	Shader deferredProgram, displayProgram, bloomProgram,
+	Uint32 postBuffer[4], postImage[4];
+	Shader deferredProgram, displayProgram, moveProgram, bloomProgram,
 		kernelProgram, gaussianBlurProgram, combineProgram;
 	VertexBuffer buffer;
 };

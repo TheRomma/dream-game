@@ -116,6 +116,12 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 	spot[9].direction = Vec3(-1.5, 1, 0.5);
 
 	lights.pushStatic(nullptr, 0, spot, 10);
+	bool bloomOn = true;
+
+	BoundingSphere aModelBounds(Vec3(-38, 14, 4), 1.0, 1.0);
+
+	ProceduralSky sky;
+	sky.init();
 
 	while(alive){
 		//Input -------------------------------------------------------------------------
@@ -169,6 +175,16 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 							SDL_SetRelativeMouseMode(SDL_TRUE);
 						}
 					}
+					if(event.key.keysym.scancode == SDL_SCANCODE_V){
+						player.camera.updateFrustum(uniform.block.projView.inverse());
+						/*
+						if(bloomOn){
+							bloomOn = false;
+						}else{
+							bloomOn = true;
+						}
+						*/
+					}
 					break;
 			}
 		}
@@ -180,10 +196,13 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 			delta = 0.1;
 		}
 
+
 		timer += delta;
 		player.input(delta, kb);
 		player.update(delta, physics, level.mesh);
 		uniform.block.position = player.camera.position;
+
+		//lights.block.sun.direction = Vec3::normalize(Vec3(-2.5,4,3+sin(timer)*5));
 		
 		animTimer += delta;
 		if(animTimer >= anim.duration){
@@ -205,10 +224,10 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-		Mat4 proj = Mat4::perspective(3.14 / 2, window->getAspect(), 0.01, 10.0);
+		Mat4 proj = Mat4::perspective(3.14 / 2, window->getAspect(), 0.01, 5.0);
 		uniform.block.projView = player.camera.getView() * proj;
-		uniform.block.time = timer;
 
+		uniform.block.time = timer;
 
 		uniform.write();
 		lights.write();
@@ -217,7 +236,9 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		Vec3 ballPos_1 = Vec3(20, 20, 6) + Vec3(sin(timer*2)*3, cos(timer*2)*4, cos(timer*1.4));
 
 		level.draw();
-		aModel.draw(animated_transforms);
+		if(physics.gjk(player.camera.frustum, aModelBounds)){
+			aModel.draw(animated_transforms);
+		}
 		ball_0.draw(Mat4::translation(ballPos_0));
 		ball_0.draw(Mat4::translation(ballPos_1));
 
@@ -229,29 +250,34 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 
-		Uint32 offset = 0;
-		for(unsigned int i=0;i<SUN_NUM_SHADOW_CASCADES;i++){
-			lights.shadows.bindLayer(i);
-			glClearColor(0.0, 0.0, 0.0, 1.0);
-			glClear(GL_DEPTH_BUFFER_BIT);
-		}
-		offset += SUN_NUM_SHADOW_CASCADES;
-		for(unsigned int i=0;i<lights.block.numSpotlights;i++){
-			lights.shadows.bindLayer(offset + i);
-			glClearColor(0.0, 0.0, 0.0, 1.0);
-			glClear(GL_DEPTH_BUFFER_BIT);
-		}
-
 		Vec3 front = player.camera.direction;
 
-		lights.calcShadowProjections(player.position);
+		lights.calcShadowProjections(player.position, player.camera.direction);
 
 		lights.write();
 
-		level.drawSunShadows(lights);
-		aModel.drawShadow(animated_transforms, lights);
-		ball_0.drawShadow(Mat4::translation(ballPos_0), lights);
-		ball_0.drawShadow(Mat4::translation(ballPos_1), lights);
+		//level.drawSunShadows(lights);
+		//aModel.drawShadow(animated_transforms, lights);
+
+		Uint32 mapOffset = 0;
+		for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
+			lights.shadows.bindLayer(i);
+			level.drawSunShadows(lights.block.sun.projViewCSM[i]);
+			aModel.drawShadow(animated_transforms, lights.block.sun.projViewCSM[i]);
+			ball_0.drawShadow(Mat4::translation(ballPos_0), lights.block.sun.projViewCSM[i]);
+			ball_0.drawShadow(Mat4::translation(ballPos_1), lights.block.sun.projViewCSM[i]);
+		}
+		mapOffset += NUM_SUN_CASCADES;
+		for(unsigned int i=0;i<lights.block.numSpotlights;i++){
+			lights.shadows.bindLayer(mapOffset + i);
+			level.drawSunShadows(lights.block.spotlights[i].projViewCSM);
+			aModel.drawShadow(animated_transforms, lights.block.spotlights[i].projViewCSM);
+			ball_0.drawShadow(Mat4::translation(ballPos_0), lights.block.spotlights[i].projViewCSM);
+			ball_0.drawShadow(Mat4::translation(ballPos_1), lights.block.spotlights[i].projViewCSM);
+		}
+
+		//ball_0.drawShadow(Mat4::translation(ballPos_0), lights);
+		//ball_0.drawShadow(Mat4::translation(ballPos_1), lights);
 		//Display ------------------------------
 		lights.bindShadowMap();
 		lights.bindEnvironmentMap();
@@ -259,15 +285,18 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
 		lights.displayEnvironmentMap();
+		//sky.draw();
 		target->draw();
-
+		/*
 		float kernel[9] = {
 			 1.0, 1.1, 1.0,
 			 1.1,-8.1, 1.1,
 			 1.0, 1.1, 1.0
 		};
+		*/
 		//target->applyKernel(kernel);
-		target->applyBloom(5);
+		if(bloomOn)
+			target->applyBloom(5);
 
 		target->display(window->width, window->height);
 

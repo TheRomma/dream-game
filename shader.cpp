@@ -182,7 +182,7 @@ std::string glsl_commonLightStructs(){
 			vec3 direction;
 			vec3 ambient;
 			vec3 diffuse;
-			mat4 view[SUN_NUM_SHADOW_CASCADES];
+			mat4 view[NUM_SUN_CASCADES];
 		};
 
 		struct Pointlight{
@@ -207,9 +207,9 @@ std::string glsl_commonLightStructs(){
 		};
 	)";
 	str.replace(
-		str.find("SUN_NUM_SHADOW_CASCADES"),
-		std::string("SUN_NUM_SHADOW_CASCADES").length(),
-		std::to_string(SUN_NUM_SHADOW_CASCADES)
+		str.find("NUM_SUN_CASCADES"),
+		std::string("NUM_SUN_CASCADES").length(),
+		std::to_string(NUM_SUN_CASCADES)
 	);
 	str.replace(
 		str.find("LIGHT_UBO_BINDING"),
@@ -371,7 +371,7 @@ std::string glsl_allModelShadowGeometry(){
 	str.replace(
 		str.find("NUM_SUN_SHADOWS"),
 		std::string("NUM_SUN_SHADOWS").length(),
-		std::to_string(SUN_NUM_SHADOW_CASCADES)
+		std::to_string(NUM_SUN_CASCADES)
 	);
 	return str;
 }
@@ -487,6 +487,27 @@ std::string glsl_displayQuadVertex(){
 
 //Simple fragment shader for drawing a screen sized quad.
 std::string glsl_displayQuadFragment(){
+	std::string str = R"(
+		out vec4 outColor;
+
+		in VS_OUT{
+			vec2 uv_coord;
+		}F;
+
+		layout(binding = 0) uniform sampler2D u_image;
+
+		void main(){
+			vec3 color = texture(u_image, F.uv_coord).rgb;
+			outColor = vec4(color.rgb, 1.0);
+			//outColor = texture(u_image, vec2((F.uv_coord.x + cos(posTime.a + F.uv_coord.y * 10) * 0.02) * 0.96 + 0.02, F.uv_coord.y));
+			//outColor = texture(u_image, vec2((F.uv_coord.x + noise(gl_FragCoord.xyz) * 0.1) * 0.8 + 0.1, F.uv_coord.y));
+		}
+	)";	
+	return str;
+}
+
+//Simple fragment shader for drawing a screen sized quad.
+std::string glsl_displayAndToneFragment(){
 	std::string str = R"(
 		out vec4 outColor;
 
@@ -731,39 +752,43 @@ std::string glsl_deferredLightPassFragment(){
 		vec4 normal = texture(u_normal, F.uv_coord).rgba;
 		if(normal.rgb != vec3(0.0, 0.0, 0.0)){
 
-			vec4 position = texture(u_position, F.uv_coord).rgba;
 			vec4 albedo = texture(u_albedo, F.uv_coord).rgba;
+			vec4 position = texture(u_position, F.uv_coord).rgba;
 			float distance = position.a;
 			vec2 metalRough = vec2(albedo.a, normal.a);
 
 			vec3 result = vec3(0.0);
 			if(distance < FOG_DISTANCE){
 
-				vec3 V = normalize(posTime.rgb - position.rgb);
+				if(max(max(albedo.r, albedo.g), albedo.b) > 1.0){
+					result = albedo.rgb;
+				}else{
+					vec3 V = normalize(posTime.rgb - position.rgb);
 
-				vec3 F0 = vec3(0.04);
-				F0 = mix(F0, albedo.rgb, metalRough.r);
+					if(metalRough.r > 0.0){
+						float rough = metalRough.g * textureQueryLevels(u_environmentMap) * 0.8;
+						vec3 R = reflect(-V, normal.rgb);
+						result += metalRough.r * albedo.rgb * textureLod(u_environmentMap, vec3(R.x, -R.z, -R.y), rough).rgb;
+					}
 
-				int offset = 0;
+					vec3 F0 = vec3(0.04);
+					F0 = mix(F0, albedo.rgb, metalRough.r);
 
-				if(metalRough.r > 0.0){
-					float rough = metalRough.g * textureQueryLevels(u_environmentMap) * 0.8;
-					vec3 R = reflect(-V, normal.rgb);
-					result += metalRough.r * albedo.rgb * textureLod(u_environmentMap, vec3(R.x, -R.z, -R.y), rough).rgb;
-				}
+					int offset = 0;
 
-				//Sunlight
-				result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_shadowMap);
+					//Sunlight
+					result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_shadowMap);
 
-				//Pointlights
-				for(int i=0;i<numLights.r;i++){
-					result += calcPointlight(pointlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
-				}
+					//Pointlights
+					for(int i=0;i<numLights.r;i++){
+						result += calcPointlight(pointlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
+					}
 
-				offset += NUM_SUN_CASCADES;
-				//Spotlights
-				for(int i=0;i<numLights.b;i++){
-					result += calcSpotlight(spotlights[i], offset + i, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, u_shadowMap);
+					offset += NUM_SUN_CASCADES;
+					//Spotlights
+					for(int i=0;i<numLights.b;i++){
+						result += calcSpotlight(spotlights[i], offset + i, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, u_shadowMap);
+					}
 				}
 				
 				//Fog
@@ -797,7 +822,7 @@ std::string glsl_deferredLightPassFragment(){
 
 //----------------------------------------------------------------------------------------
 
-std::string glsl_environmentVertex(){
+std::string glsl_displayCubeVertex(){
 	std::string str = R"(
 	layout(location = 0) in vec3 POSITION;
 
@@ -814,7 +839,6 @@ std::string glsl_environmentVertex(){
 		originView[3][3] = 0.01;
 
 		gl_Position = originView * vec4(POSITION, 1.0);
-		//gl_Position = pos.xyzw;
 
 		F.uv_coord = POSITION;
 	}
@@ -843,6 +867,24 @@ std::string glsl_environmentFragment(){
 
 //-----------------------------------------------------------------------------------------------------------
 
+std::string glsl_skyFragment(){
+	std::string str = R"(
+	out vec4 outColor;
+
+	in VS_OUT{
+		vec3 uv_coord;
+	}F;
+
+	void main()
+	{
+		outColor = vec4(vec3(0.2, 0.4, 0.8) * (2/length(F.uv_coord.xy)) * abs(F.uv_coord.z), 1.0);
+	}
+	)";
+	return str;
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
 std::string glsl_bloomFragment(){
 	std::string str = R"(
 		out vec4 outColor;
@@ -855,12 +897,15 @@ std::string glsl_bloomFragment(){
 
 		void main(){
 			vec3 color = texture(u_image, F.uv_coord).rgb;
+			/*
 			float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722)); 
-			if(brightness > 1.0){
+			if(brightness >= 0.0){
 				outColor = vec4(color * 0.1, 1.0);
 			}else{
 				outColor = vec4(0.0, 0.0, 0.0, 1.0);
 			}
+			*/
+			outColor = vec4(color * color, 1.0);
 		}
 	)";
 	return str;
@@ -913,13 +958,13 @@ std::string glsl_gaussianBlurFragment(){
 
 			if(u_horizontal){
 				for(int i=1;i<5;i++){
-					color += texture(u_image, F.uv_coord + vec2(texelSize.x * i, 0.0)).rgb * weights[i];
-					color += texture(u_image, F.uv_coord - vec2(texelSize.x * i, 0.0)).rgb * weights[i];
+					color += texture(u_image, F.uv_coord + vec2(texelSize.x * i * 1.9, 0.0)).rgb * weights[i];
+					color += texture(u_image, F.uv_coord - vec2(texelSize.x * i * 1.9, 0.0)).rgb * weights[i];
 				}
 			}else{
 				for(int i=1;i<5;i++){
-					color += texture(u_image, F.uv_coord + vec2(0.0, texelSize.y * i)).rgb * weights[i];
-					color += texture(u_image, F.uv_coord - vec2(0.0, texelSize.y * i)).rgb * weights[i];
+					color += texture(u_image, F.uv_coord + vec2(0.0, texelSize.y * i * 1.9)).rgb * weights[i];
+					color += texture(u_image, F.uv_coord - vec2(0.0, texelSize.y * i * 1.9)).rgb * weights[i];
 				}
 			}
 
@@ -940,9 +985,11 @@ std::string glsl_combineFragment(){
 		layout(binding = 0) uniform sampler2D u_imgFirst;
 		layout(binding = 1) uniform sampler2D u_imgSecond;
 
+		layout(location = 0) uniform float u_ratioA;
+		layout(location = 1) uniform float u_ratioB;
+
 		void main(){
-			outColor = vec4(texture(u_imgFirst, F.uv_coord).rgb + texture(u_imgSecond, F.uv_coord).rgb, 1.0);
-			//outColor = vec4(texture(u_imgFirst, F.uv_coord).rgb, 1.0);
+			outColor = vec4(u_ratioA * texture(u_imgFirst, F.uv_coord).rgb + u_ratioB * texture(u_imgSecond, F.uv_coord).rgb, 1.0);
 		}
 	)";
 	return str;

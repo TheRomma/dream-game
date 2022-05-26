@@ -352,6 +352,10 @@ BoundingSphere* SweptSphere::getNext(){
 	return &colliders[toggle];
 }
 
+BoundingSphere* SweptSphere::getPrev(){
+	return &colliders[(1 - toggle)];
+}
+
 void SweptSphere::swapSpheres(){
 	toggle += 1;
 	if(toggle > 1){

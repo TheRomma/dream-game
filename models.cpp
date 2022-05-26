@@ -95,6 +95,7 @@ void StaticModel::draw(Mat4 model){
 }
 
 //Draw the 3d model onto g-buffers.
+/*
 void StaticModel::drawShadow(Mat4 model, LightUniforms& lights){
 	shadowProgram.use();
 	glUniformMatrix4fv(0, 1, false, model.ptr());
@@ -116,6 +117,16 @@ void StaticModel::drawShadow(Mat4 model, LightUniforms& lights){
 
 		glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
 	}
+}
+*/
+//Draw the 3d model onto a shadowmap.
+void StaticModel::drawShadow(Mat4 model, Mat4 view){
+	shadowProgram.use();
+	glUniformMatrix4fv(0, 1, false, model.ptr());
+	glUniformMatrix4fv(1, 1, false, view.ptr());
+	buffer.bind();
+
+	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
 }
 
 //------------------------------------------------------------------------------------
@@ -175,29 +186,15 @@ void AnimatedModel::draw(Mat4 model){
 	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
 }
 
-//Draw the 3d model onto g-buffers.
-void AnimatedModel::drawShadow(Mat4 model, LightUniforms& lights){
+//Draw the 3d model onto a shadowmap.
+void AnimatedModel::drawShadow(Mat4 model, Mat4 view){
 	shadowProgram.use();
 	glUniformMatrix4fv(0, 1, false, model.ptr());
+	glUniformMatrix4fv(1, 1, false, view.ptr());
 	glUniformMatrix4fv(2, numBones, false, joints[0].ptr());
 	buffer.bind();
-	material.bind(0);
 
-	Uint32 offset = 0;
-	for(unsigned int i=0;i<SUN_NUM_SHADOW_CASCADES;i++){
-		lights.shadows.bindLayer(i);
-		glUniformMatrix4fv(1, 1, false, lights.block.sun.projViewCSM[i].ptr());
-
-		glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
-	}
-
-	offset += SUN_NUM_SHADOW_CASCADES;
-	for(unsigned int i=0;i<lights.block.numSpotlights;i++){
-		lights.shadows.bindLayer(offset + i);
-		glUniformMatrix4fv(1, 1, false, lights.block.spotlights[i].projViewCSM.ptr());
-
-		glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
-	}
+	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
 }
 
 //------------------------------------------------------------------------------------

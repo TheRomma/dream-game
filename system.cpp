@@ -7,6 +7,7 @@ void Camera::init(Vec3 position, float yaw, float pitch, float sensitivity){
 	this->pitch = pitch;
 	this->sensitivity = sensitivity;
 	mouseUpdate(0.0, 0.0);
+	frustum = BoundingConvex(corners, 8);
 }
 
 //Update direction with mouse motion.
@@ -40,6 +41,25 @@ Vec3 Camera::getRight(){
 //Construct a xy plane front vector.
 Vec3 Camera::getFront(){
 	return Vec3::normalize(Vec3(direction.x, direction.y, 0.0));
+}
+
+void Camera::updateFrustum(Mat4 invProjView){
+	corners[0] = Vec3(-1, -1, -1);
+	corners[1] = Vec3( 1, -1, -1);
+	corners[2] = Vec3( 1,  1, -1);
+	corners[3] = Vec3(-1,  1, -1);
+	corners[4] = Vec3(-1, -1,  1);
+	corners[5] = Vec3( 1, -1,  1);
+	corners[6] = Vec3( 1,  1,  1);
+	corners[7] = Vec3(-1,  1,  1);
+
+	float w = 0;
+	for(unsigned int i=0;i<8;i++){
+		corners[i] = invProjView.transform(corners[i], 1.0, w);
+		corners[i] = corners[i] / w;
+		corners[i].print();
+	}
+	std::cout<<std::endl;
 }
 
 //--------------------------------------------------------------------------------------------------------

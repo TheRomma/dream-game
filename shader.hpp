@@ -13,8 +13,8 @@
 
 #define SHADOW_BASE 3
 
-#define SUN_NUM_SHADOW_CASCADES 4
-#define MAX_POINTLIGHTS 32
+#define NUM_SUN_CASCADES 4
+#define MAX_POINTLIGHTS 64
 #define MAX_SPOTLIGHTS 32
 
 //Shader program for hardware accelerated drawing.
@@ -65,6 +65,7 @@ std::string glsl_animatedModelShadowVertex(Uint32 numBones);
 //Simple shaders for drawing a screen sized quad.
 std::string glsl_displayQuadVertex();
 std::string glsl_displayQuadFragment();
+std::string glsl_displayAndToneFragment();
 
 //Common lights calculations in glsl.
 std::string glsl_lightCalculations();
@@ -73,8 +74,11 @@ std::string glsl_lightCalculations();
 std::string glsl_deferredLightPassFragment();
 
 //Shaders for displaying environment maps.
-std::string glsl_environmentVertex();
+std::string glsl_displayCubeVertex();
 std::string glsl_environmentFragment();
+
+//Procedural sky shaders.
+std::string glsl_skyFragment();
 
 //Post processing shaders.
 std::string glsl_bloomFragment();

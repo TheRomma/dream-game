@@ -185,6 +185,22 @@ void CSM::bindLayer(Uint32 layer){
 	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth, 0, layer);
 }
 
+//Clear shadow map.
+void CSM::clear(Uint32 numSun, Uint32 numSpot){
+	Uint32 offset = 0;
+	for(unsigned int i=0;i<numSun;i++){
+		bindLayer(i);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_DEPTH_BUFFER_BIT);
+	}
+	offset += numSun;
+	for(unsigned int i=0;i<numSpot;i++){
+		bindLayer(offset + i);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_DEPTH_BUFFER_BIT);
+	}
+}
+
 //-------------------------------------------------------------------------
 
 #include "loaders.hpp"
@@ -227,57 +243,57 @@ void EnvironmentMap::init(const char* filename){
 
 	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-	float vertices[108] = {
-		-1.0f,  1.0f, -1.0f,
-		-1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f, -1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-
-		-1.0f, -1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f,
-		-1.0f, -1.0f,  1.0f,
-
-		-1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f, -1.0f,
-		 1.0f,  1.0f,  1.0f,
-		 1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f,  1.0f,
-		-1.0f,  1.0f, -1.0f,
-
-		-1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f, -1.0f,
-		 1.0f, -1.0f, -1.0f,
-		-1.0f, -1.0f,  1.0f,
-		 1.0f, -1.0f,  1.0f
-	};
-
-	buffer.init(3 * sizeof(float), 108 * sizeof(float), vertices);
-	buffer.setAttribute(0, 3);
-
 	program.init(
-		(glsl_header() + glsl_commonUniforms() + glsl_environmentVertex()).c_str(),
+		(glsl_header() + glsl_commonUniforms() + glsl_displayCubeVertex()).c_str(),
 		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_environmentFragment()).c_str()
 	);
+
+	float vertices[108] = {
+		-1.0,  1.0, -1.0,
+		-1.0, -1.0, -1.0,
+		 1.0, -1.0, -1.0,
+		 1.0, -1.0, -1.0,
+		 1.0,  1.0, -1.0,
+		-1.0,  1.0, -1.0,
+
+		-1.0, -1.0,  1.0,
+		-1.0, -1.0, -1.0,
+		-1.0,  1.0, -1.0,
+		-1.0,  1.0, -1.0,
+		-1.0,  1.0,  1.0,
+		-1.0, -1.0,  1.0,
+
+		 1.0, -1.0, -1.0,
+		 1.0, -1.0,  1.0,
+		 1.0,  1.0,  1.0,
+		 1.0,  1.0,  1.0,
+		 1.0,  1.0, -1.0,
+		 1.0, -1.0, -1.0,
+
+		-1.0, -1.0,  1.0,
+		-1.0,  1.0,  1.0,
+		 1.0,  1.0,  1.0,
+		 1.0,  1.0,  1.0,
+		 1.0, -1.0,  1.0,
+		-1.0, -1.0,  1.0,
+
+		-1.0,  1.0, -1.0,
+		 1.0,  1.0, -1.0,
+		 1.0,  1.0,  1.0,
+		 1.0,  1.0,  1.0,
+		-1.0,  1.0,  1.0,
+		-1.0,  1.0, -1.0,
+
+		-1.0, -1.0, -1.0,
+		-1.0, -1.0,  1.0,
+		 1.0, -1.0, -1.0,
+		 1.0, -1.0, -1.0,
+		-1.0, -1.0,  1.0,
+		 1.0, -1.0,  1.0
+	};
+	
+	buffer.init(3*sizeof(float), 108*sizeof(float), vertices);
+	buffer.setAttribute(0, 3);
 }
 
 //Environment map destructor.
@@ -299,7 +315,71 @@ void EnvironmentMap::display(){
 	buffer.bind();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+//-------------------------------------------------------------------------
+
+//Pure shader only sky.
+void ProceduralSky::init(){
+	program.init(
+		(glsl_header() + glsl_commonUniforms() + glsl_displayCubeVertex()).c_str(),
+		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_skyFragment()).c_str()
+	);
+
+	float vertices[108] = {
+		-1.0,  1.0, -0.1,
+		-1.0, -1.0, -0.1,
+		 1.0, -1.0, -0.1,
+		 1.0, -1.0, -0.1,
+		 1.0,  1.0, -0.1,
+		-1.0,  1.0, -0.1,
+
+		-1.0, -1.0,  0.1,
+		-1.0, -1.0, -0.1,
+		-1.0,  1.0, -0.1,
+		-1.0,  1.0, -0.1,
+		-1.0,  1.0,  0.1,
+		-1.0, -1.0,  0.1,
+
+		 1.0, -1.0, -0.1,
+		 1.0, -1.0,  0.1,
+		 1.0,  1.0,  0.1,
+		 1.0,  1.0,  0.1,
+		 1.0,  1.0, -0.1,
+		 1.0, -1.0, -0.1,
+
+		-1.0, -1.0,  0.1,
+		-1.0,  1.0,  0.1,
+		 1.0,  1.0,  0.1,
+		 1.0,  1.0,  0.1,
+		 1.0, -1.0,  0.1,
+		-1.0, -1.0,  0.1,
+
+		-1.0,  1.0, -0.1,
+		 1.0,  1.0, -0.1,
+		 1.0,  1.0,  0.1,
+		 1.0,  1.0,  0.1,
+		-1.0,  1.0,  0.1,
+		-1.0,  1.0, -0.1,
+
+		-1.0, -1.0, -0.1,
+		-1.0, -1.0,  0.1,
+		 1.0, -1.0, -0.1,
+		 1.0, -1.0, -0.1,
+		-1.0, -1.0,  0.1,
+		 1.0, -1.0,  0.1
+	};
+	
+	buffer.init(3*sizeof(float), 108*sizeof(float), vertices);
+	buffer.setAttribute(0, 3);
+}
+
+//Draw sky.
+void ProceduralSky::draw(){
+	program.use();
+	buffer.bind();
+	glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 //-------------------------------------------------------------------------
@@ -307,7 +387,7 @@ void EnvironmentMap::display(){
 //LightUniforms init.
 LightUniforms::LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight, const char* environment){
 	ubo.init(GL_UNIFORM_BUFFER, UBO_LIGHT_BASE, sizeof(LightBlock), nullptr);
-	shadows.init(shadowWidth, shadowHeight, SUN_NUM_SHADOW_CASCADES + MAX_SPOTLIGHTS);
+	shadows.init(shadowWidth, shadowHeight, NUM_SUN_CASCADES + MAX_SPOTLIGHTS);
 	envMap.init(environment);
 	this->reset();
 }
@@ -363,15 +443,17 @@ void LightUniforms::write(){
 	//this->reset();
 }
 
-//Calculate all shadow prohjections.
-void LightUniforms::calcShadowProjections(Vec3 position){
-	float scale = 10.0;
-	for(unsigned int i=0;i<SUN_NUM_SHADOW_CASCADES;i++){
+//Calculate all shadow projections.
+void LightUniforms::calcShadowProjections(Vec3 position, Vec3 direction){
+	shadows.clear(NUM_SUN_CASCADES, block.numSpotlights);
+
+	float scale = 8.0;
+	for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
 		block.sun.projViewCSM[i] = Mat4::lookAt(
-		Vec3::normalize(block.sun.direction) * 100 + (position),
-		(position), Vec3(0,0,1)) * 
-		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 200.0);
-		scale *= 2.1;
+		Vec3::normalize(block.sun.direction) * 200 + (position + direction * scale * 0.5),
+		(position + direction * scale * 0.5), Vec3(0,0,1)) * 
+		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 400.0);
+		scale *= 2.0;
 	}
 
 	for(unsigned int i=0;i<block.numSpotlights;i++){
@@ -419,6 +501,8 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
 	//Normal and roughness data.
@@ -427,6 +511,8 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
 
 	//Albedo and metallic data.
@@ -435,6 +521,8 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
 
 	Uint32 attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
@@ -446,6 +534,8 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, false, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, depthStencil, 0);
 
 	//Final display framebuffer.
@@ -458,20 +548,24 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, displayImage, 0);
 
 	//Post processing frame.
-	glGenFramebuffers(2, postBuffer);
+	glGenFramebuffers(4, postBuffer);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[0]);
 
 	//Post processing image.
-	glGenTextures(2, postImage);
+	glGenTextures(4, postImage);
 
 	glBindTexture(GL_TEXTURE_2D, postImage[0]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postImage[0], 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1]);
@@ -480,7 +574,29 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postImage[1], 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[2]);
+
+	glBindTexture(GL_TEXTURE_2D, postImage[2]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 320, 180, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postImage[2], 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[3]);
+
+	glBindTexture(GL_TEXTURE_2D, postImage[3]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 320, 180, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, postImage[3], 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -493,7 +609,12 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 
 	displayProgram.init(
 		(glsl_header() + glsl_displayQuadVertex()).c_str(),
-		(glsl_header() + glsl_commonUniforms() + glsl_displayQuadFragment()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_displayAndToneFragment()).c_str()
+	);
+
+	moveProgram.init(
+		(glsl_header() + glsl_displayQuadVertex()).c_str(),
+		(glsl_header() + glsl_displayQuadFragment()).c_str()
 	);
 
 	bloomProgram.init(
@@ -539,10 +660,10 @@ DeferredTarget::~DeferredTarget(){
 		glDeleteTextures(1, &gAlbedo);
 		glDeleteTextures(1, &depthStencil);
 		glDeleteTextures(1, &displayImage);
-		glDeleteTextures(2, postImage);
+		glDeleteTextures(4, postImage);
 		glDeleteFramebuffers(1, &gBuffer);
 		glDeleteFramebuffers(1, &displayBuffer);
-		glDeleteFramebuffers(2, postBuffer);
+		glDeleteFramebuffers(4, postBuffer);
 	}
 }
 
@@ -583,13 +704,14 @@ void DeferredTarget::applyBloom(Uint32 blurPasses){
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	glViewport(0, 0, width, height);
+	glViewport(0, 0, 320, 180);
 	buffer.bind();
 	
 	//Separate overflowing colors.
-	bloomProgram.use();
+	//bloomProgram.use();
+	moveProgram.use();
 
-	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[0]);	
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[2]);	
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, displayImage);
@@ -599,13 +721,29 @@ void DeferredTarget::applyBloom(Uint32 blurPasses){
 	//Heavily blur resulting image.
 	gaussianBlurProgram.use();
 	
+	/*
 	unsigned int horizontal = 0;
-	for(unsigned int i=0;i<blurPasses*2;i++){
-		glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1 - horizontal]);
+	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1 - horizontal]);
+	glUniform1i(1, horizontal);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, displayImage);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	horizontal++;
+	if(horizontal > 1){
+		horizontal = 0;
+	}
+	*/
+
+	int horizontal = 0;
+	for(int i=0;i<blurPasses*2;i++){
+		glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[3 - horizontal]);
 		glUniform1i(1, horizontal);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, postImage[horizontal]);
+		glBindTexture(GL_TEXTURE_2D, postImage[2 + horizontal]);
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -617,20 +755,23 @@ void DeferredTarget::applyBloom(Uint32 blurPasses){
 	
 	//Combine results with original image.
 	combineProgram.use();
+	glUniform1f(0, 0.85);
+	glUniform1f(1, 0.15);
 
+	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1]);
 	
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, displayImage);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, postImage[0]);
+	glBindTexture(GL_TEXTURE_2D, postImage[2]);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	
 	//Push final image into display buffer.
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
 
-	displayProgram.use();
+	moveProgram.use();
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, postImage[1]);
@@ -658,7 +799,7 @@ void DeferredTarget::applyKernel(float* kernel){
 	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
 
-	displayProgram.use();
+	moveProgram.use();
 	buffer.bind();
 
 	glActiveTexture(GL_TEXTURE0);

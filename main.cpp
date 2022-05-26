@@ -1,13 +1,62 @@
 #define SDL_MAIN_HANDLED
 
+#include "renderer.hpp"
+
+int main(int argc, const char* argv[]){
+	RendererSettings settings;
+	Renderer renderer;
+	renderer.init(settings);
+
+	bool alive = true;
+	SDL_Event event;
+	while(alive){
+		SDL_PollEvent(&event);
+		switch(event.type){
+			case SDL_QUIT:
+				alive = false;
+				break;
+		}
+	}
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 #include "game.hpp"
 #include "system.hpp"
 
 #include <ctime>
 #include <random>
-
 int main(int argc, const char* argv[]){
-	/*
+	
 	SDL_MessageBoxButtonData buttons[] = {
 		{0, 0, "640x480"},
 		{0, 1, "1280x720"},
@@ -24,12 +73,12 @@ int main(int argc, const char* argv[]){
 		buttons,
 		0
 	};
-	*/
+	
 
 	int buttonId = 0;
 	Uint32 width = 1280;
 	Uint32 height = 720;
-	/*
+	
 	SDL_ShowMessageBox(&messageData, &buttonId);
 	if(buttonId == 0){
 		width = 640;
@@ -53,7 +102,7 @@ Toggle fullscreen: F
 Detach cursor: M
 Restart: R
 Quit: ESC)", NULL);
-*/
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 	Window window;
 	if(!window.init("A tech demo by Jere Koivisto", width, height, SDL_WINDOW_RESIZABLE)){
@@ -63,7 +112,7 @@ Quit: ESC)", NULL);
 	}
 	window.vsync(-1);
 
-	DeferredTarget target(width, height);
+	DeferredTarget target(1920, 1080);
 
 	Uint32 next = LAYER_TEST;
 	while(next){
@@ -73,3 +122,4 @@ Quit: ESC)", NULL);
 	SDL_Quit();
 	return 0;
 }
+*/

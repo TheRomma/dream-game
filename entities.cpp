@@ -32,6 +32,7 @@ void C_Physics::handleCollision(CollisionHandler& handler, PhysicsMesh& mesh){
 				gravVelocity -= gravVelocity * normal.z * normal.z * 0.03;
 			}
 			collider.getNext()->center = collider.getNext()->center + normal * distance;
+			collider.getPrev()->center = collider.getPrev()->center + normal * distance;
 		}
 	}
 }
@@ -80,6 +81,6 @@ void Level::draw(){
 	model.draw(Mat4::identity());
 }
 
-void Level::drawSunShadows(LightUniforms& lights){
-	model.drawShadow(Mat4::identity(), lights);
+void Level::drawSunShadows(Mat4 view){
+	model.drawShadow(Mat4::identity(), view);
 }

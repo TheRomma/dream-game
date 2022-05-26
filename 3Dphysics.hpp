@@ -42,6 +42,7 @@ struct SweptSphere{
 
 	Vec3 furthest(Vec3 direction);
 	BoundingSphere* getNext();
+	BoundingSphere* getPrev();
 	void swapSpheres();
 
 	BoundingSphere colliders[2];

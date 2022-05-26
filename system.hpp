@@ -5,6 +5,7 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "3Dmaths.hpp"
+#include "3Dphysics.hpp"
 
 //Camera
 struct Camera{
@@ -17,10 +18,14 @@ struct Camera{
 	Mat4 getOriginView();
 	Vec3 getRight();
 	Vec3 getFront();
+	void updateFrustum(Mat4 invProjView);
 
 	Vec3 position;
 	Vec3 direction;
 	float yaw, pitch, sensitivity;
+
+	Vec3 corners[8];
+	BoundingConvex frustum;
 };
 
 //Clock

@@ -36,7 +36,8 @@ struct StaticModel{
 	~StaticModel(){};
 
 	void draw(Mat4 model);
-	void drawShadow(Mat4 model, LightUniforms& lights);
+	//void drawShadow(Mat4 model, LightUniforms& lights);
+	void drawShadow(Mat4 model, Mat4 view);
 
 	private:
 	Shader gProgram, shadowProgram;
@@ -52,7 +53,7 @@ struct AnimatedModel{
 
 	void pose(Animation& anim, float time);
 	void draw(Mat4 model);
-	void drawShadow(Mat4 model, LightUniforms& lights);
+	void drawShadow(Mat4 model, Mat4 view);
 
 	private:
 	Uint32 numBones;
