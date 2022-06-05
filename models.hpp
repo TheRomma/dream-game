@@ -2,7 +2,6 @@
 
 #include "3Dphysics.hpp"
 #include "shader.hpp"
-#include "graphics.hpp"
 
 //Joint.
 struct Joint{
@@ -21,7 +20,6 @@ struct Animation{
 
 	float duration;
 
-	//private:
 	Uint32 numFrames;
 	Uint32 numBones;
 	Uint32 animRate;
@@ -33,35 +31,34 @@ struct Animation{
 struct StaticModel{
 	StaticModel(){};
 	bool init(const char* filename);
-	~StaticModel(){};
+	~StaticModel();
 
 	void draw(Mat4 model);
-	//void drawShadow(Mat4 model, LightUniforms& lights);
 	void drawShadow(Mat4 model, Mat4 view);
 
-	private:
+	Uint32 numVertices;
+
 	Shader gProgram, shadowProgram;
-	VertexBuffer buffer;
-	Material material;
+	Uint32 vao, vbo;
+	Uint32 diffuse, metalRough;
 };
 
 //A drawable 3d model.
 struct AnimatedModel{
 	AnimatedModel(){};
 	bool init(const char* filename);
-	~AnimatedModel(){};
+	~AnimatedModel();
 
 	void pose(Animation& anim, float time);
 	void draw(Mat4 model);
 	void drawShadow(Mat4 model, Mat4 view);
 
-	private:
-	Uint32 numBones;
+	Uint32 numVertices, numBones;
 	Mat4* joints;
 
 	Shader gProgram, shadowProgram;
-	VertexBuffer buffer;
-	Material material;
+	Uint32 vao, vbo;
+	Uint32 diffuse, metalRough;
 };
 
 //Physics mesh

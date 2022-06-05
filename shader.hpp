@@ -47,7 +47,7 @@ std::string glsl_emptyShader();
 std::string glsl_commonUniforms();
 
 //Common light structs and ubo in glsl.
-std::string glsl_commonLightStructs();
+//std::string glsl_commonLightStructs();
 
 //Shader program for static models.
 std::string glsl_deferredStaticModelVertex();

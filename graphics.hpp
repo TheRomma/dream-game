@@ -27,7 +27,7 @@ struct VertexBuffer{
 	Uint32 stride;			//Length of the stride between vertices.
 	long attribLength;
 };
-
+/*
 //Higher level interface for common textures.
 struct Material{
 	Material(){};
@@ -64,21 +64,8 @@ struct CommonBlock{
 	Vec3 position;		//Position of the theoretical camera.
 	float time;			//Elapsed time.
 };
-
-//UBO containing common uniforms for drawing.
-struct CommonUniforms{
-	CommonUniforms();
-	~CommonUniforms(){};
-
-	void bind();
-	void write();
-
-	CommonBlock block;
-
-	private:
-	ShaderBuffer ubo;
-};
-
+*/
+/*
 //Cascaded shadow map.
 struct CSM{
 	CSM(){};
@@ -95,6 +82,7 @@ struct CSM{
 	private:
 	Uint32 frame, depth;
 };
+*/
 
 //Environment map.
 struct EnvironmentMap{
@@ -123,36 +111,7 @@ struct ProceduralSky{
 	VertexBuffer buffer;
 };
 
-//Sun data.
-struct Sun{
-	Vec3 direction;
-		char padding0[4];
-	Vec3 ambient;
-		char padding1[4];
-	Vec3 diffuse;
-		char padding2[4];
-	Mat4 projViewCSM[NUM_SUN_CASCADES];
-};
-
-//Pointlight data.
-struct Pointlight{
-	Vec3 position;
-	float radius;
-	Vec3 diffuse;
-		char padding1[4];
-};
-
-//Spotlight data.
-struct Spotlight{
-	Vec3 position;
-	float radius;
-	Vec3 direction;
-	float cutOff;
-	Vec3 diffuse;
-		char padding1[4];
-	Mat4 projViewCSM;
-};
-
+/*
 //Light uniforms.
 struct LightBlock{
 	Sun sun;
@@ -166,31 +125,23 @@ struct LightBlock{
 
 //UBO containing light uniforms for light calculations.
 struct LightUniforms{
-	LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight, const char* environment);
+	LightUniforms();
 	~LightUniforms(){};
 
 	void bind();
 	void reset();
-	void resetStatic();
 	void push(Pointlight light);
 	void push(Spotlight light);
-	void pushStatic(Pointlight* points, Uint32 numPoints, Spotlight* spots, Uint32 numSpots);
 	void write();
 	void calcShadowProjections(Vec3 position, Vec3 direction);
-	void bindShadowFrame();
-	void bindShadowMap();
-	void clearShadowMap();
-	void bindEnvironmentMap();
-	void displayEnvironmentMap();
 
 	LightBlock block;
-	CSM shadows;
-	EnvironmentMap envMap;
 
 	private:
 	ShaderBuffer ubo;
 };
-
+*/
+/*
 struct DeferredTarget{
 	DeferredTarget(Uint32 width, Uint32 height);
 	~DeferredTarget();
@@ -212,3 +163,4 @@ struct DeferredTarget{
 		kernelProgram, gaussianBlurProgram, combineProgram;
 	VertexBuffer buffer;
 };
+*/

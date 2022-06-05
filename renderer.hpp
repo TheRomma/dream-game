@@ -5,6 +5,7 @@
 #include <SDL2/SDL_opengl.h>
 
 #include "shader.hpp"
+#include "models.hpp"
 
 #define UBO_BINDING 0
 
@@ -38,18 +39,28 @@ struct Spotlight{
 	Mat4 projViewCSM;
 };
 
-//Block of common uniform data.
-struct UniformBlock{
+//Common uniforms.
+struct CommonUniforms{
 	Mat4 projView;
-	Vec3 cameraPosition;
-	float timeElapsed;
+	Vec3 camPosition;
+	float time;
+};
 
+//Light uniforms.
+struct LightUniforms{
 	Sun sun;
 	float numPointlights;
+		char padding1[4];
 	float numSpotlights;
-		char padding0[8];
+		char padding0[4];
 	Pointlight pointlights[MAX_POINTLIGHTS];	
 	Spotlight spotlights[MAX_SPOTLIGHTS];	
+};
+
+//Block of common uniform data.
+struct UniformBlock{
+	CommonUniforms common;
+	LightUniforms lights;
 };
 
 //Settings for the renderer.
@@ -66,6 +77,8 @@ struct RendererSettings{
 	Uint32 frameHeight = 720;
 	Uint32 frameBlurWidth = 256;
 	Uint32 frameBlurHeight = 144;
+	Uint32 frameBloom = 5;
+	float frameHFov = 1.7;
 
 	Uint32 shadowWidth = 1024;
 	Uint32 shadowHeight = 1024;
@@ -77,17 +90,28 @@ struct Renderer{
 	int init(RendererSettings settings);
 	~Renderer();
 
-	void swapBuffers();
+	void toggleWindowFullscreen();
+	Mat4 getWindowProjection(float hFov);//Temp?
 
-	void bindGBuffer();
+	void bindGBuffer();//Temp?
+	void bindDisplay();//Temp?
 	void deferredPass();
 	void applyBloom(Uint32 blurPasses);
-	void applyKernel(float* kernel);
-	void display();
+	void displayFrame();
 
-	void updateUniforms();
+	void updateCommons();//Temp?
+	void updateLights();//Temp?
+	void pushLight(Pointlight light);
+	void pushLight(Spotlight light);
+
+	void bindShadowFrame();//Temp?
+	void bindShadowLayer(Uint32 layer);//Temp?
+	void clearShadows();//Temp?
+
+	void drawModel(StaticModel* mesh, Mat4 model);
 
 	UniformBlock uniforms;
+	RendererSettings settings;
 
 	private:
 	SDL_Window* window;			//SDL Window.
@@ -95,7 +119,6 @@ struct Renderer{
 
 	Uint32 nullVao;
 
-	Uint32 frameWidth, frameHeight;
 	Uint32 gBuffer, gPosition, gNormal, gAlbedo, gDepth;
 	Uint32 displayBuffer, displayImage;
 	Uint32 postBuffer, postImage;

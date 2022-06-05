@@ -2,6 +2,8 @@
 
 //Renderer constructor.
 int Renderer::init(RendererSettings settings){
+	this->settings = settings;
+
 	//Init SDL.
 	SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -27,8 +29,6 @@ int Renderer::init(RendererSettings settings){
 	SDL_GL_SetSwapInterval(settings.windowVsync);
 
 	//Create deferred rendertarget.
-	frameWidth = settings.frameWidth;
-	frameHeight = settings.frameHeight;
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
@@ -142,7 +142,7 @@ int Renderer::init(RendererSettings settings){
 	//Setup shader programs.
 	deferredProgram.init(
 		(glsl_header() + glsl_displayQuadVertex()).c_str(),
-		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() +
+		(glsl_header() + glsl_commonUniforms() +
 			glsl_lightCalculations() + glsl_deferredLightPassFragment()).c_str()
 	);
 
@@ -226,22 +226,45 @@ Renderer::~Renderer(){
 	SDL_Quit();
 }
 
-//Swap window buffers.
-void Renderer::swapBuffers(){
-	SDL_GL_SwapWindow(window);
+//Toggle window in and out of fullscreen.
+void Renderer::toggleWindowFullscreen(){
+	if(SDL_GetWindowFlags(window) & SDL_WINDOW_FULLSCREEN_DESKTOP){
+		SDL_SetWindowFullscreen(window, 0);
+	}else{
+		SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+	}
 }
 
-//Bind gBuffer.
+//Calculate a correct perspective projection for the window.
+Mat4 Renderer::getWindowProjection(float hFov){
+	int width, height;
+	SDL_GetWindowSize(window, &width, &height);
+
+	float aspect = (float)width/(float)height;
+	float vFov = 2 * atan(tan(hFov*0.5)*aspect);
+
+	return Mat4::perspective(hFov, aspect, 0.1, 100.0);
+}
+
+//Bind g buffer.
 void Renderer::bindGBuffer(){
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	glViewport(0, 0, settings.frameWidth, settings.frameHeight);
+}
+
+//Bind display buffer.
+void Renderer::bindDisplay(){
+	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
+	glViewport(0, 0, settings.frameWidth, settings.frameHeight);
 }
 
 //Deferred lighting pass.
 void Renderer::deferredPass(){
+	//Deferred pass.
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	glViewport(0, 0, frameWidth, frameHeight);
+	glViewport(0, 0, settings.frameWidth, settings.frameHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
 
 	deferredProgram.use();
@@ -253,16 +276,22 @@ void Renderer::deferredPass(){
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, shadowImages);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	//Reset light uniforms.
+	uniforms.lights.numPointlights = 0.0;
+	uniforms.lights.numSpotlights = 0.0;
 }
 
-//Apply bloom to final image.
+//Apply bloom to current image.
 void Renderer::applyBloom(Uint32 blurPasses){
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	glViewport(0, 0, 256, 144);
+	glViewport(0, 0, settings.frameBlurWidth, settings.frameBlurHeight);
 	glBindVertexArray(nullVao);
 	
 	moveProgram.use();
@@ -277,13 +306,13 @@ void Renderer::applyBloom(Uint32 blurPasses){
 	//Heavily blur resulting image.
 	blurProgram.use();
 	
-	int horizontal = 1;
+	int horizontal = 0;
 	for(int i=0;i<blurPasses*2;i++){
-		glBindFramebuffer(GL_FRAMEBUFFER, blurBuffer[horizontal]);
+		glBindFramebuffer(GL_FRAMEBUFFER, blurBuffer[1 - horizontal]);
 		glUniform1i(1, horizontal);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, blurImage[1-horizontal]);
+		glBindTexture(GL_TEXTURE_2D, blurImage[horizontal]);
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -298,7 +327,7 @@ void Renderer::applyBloom(Uint32 blurPasses){
 	glUniform1f(0, 0.85);
 	glUniform1f(1, 0.15);
 
-	glViewport(0, 0, frameWidth, frameHeight);
+	glViewport(0, 0, settings.frameWidth, settings.frameHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer);
 	
 	glActiveTexture(GL_TEXTURE0);
@@ -319,41 +348,16 @@ void Renderer::applyBloom(Uint32 blurPasses){
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-//Convolve a 3x3 kernel with the final image.
-void Renderer::applyKernel(float* kernel){
+//Display the final image on screen.
+void Renderer::displayFrame(){
+	if(settings.frameBloom > 0)
+		applyBloom(settings.frameBloom);
+
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
 
-	glViewport(0, 0, frameWidth, frameHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer);
-	
-	kernelProgram.use();
-	glBindVertexArray(nullVao);
-
-	glUniformMatrix3fv(1, 1, 0, kernel);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, displayImage);
-
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
-
-	moveProgram.use();
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, postImage);
-
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
-
-//Display the final image on screen.
-void Renderer::display(){
 	int width, height;
 	SDL_GetWindowSize(window, &width, &height);
-
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
 
 	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -369,8 +373,96 @@ void Renderer::display(){
 	SDL_GL_SwapWindow(window);
 }
 
-//Write changes to common uniforms.
-void Renderer::updateUniforms(){
+//Update common uniforms.
+void Renderer::updateCommons(){
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UniformBlock), &uniforms);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CommonUniforms), &uniforms.common);
+}
+
+//Update common uniforms and calculate shadow projections.
+void Renderer::updateLights(){
+	float scale = 8.0;
+	for(int i=0;i<NUM_SUN_CASCADES;i++){
+		uniforms.lights.sun.projViewCSM[i] = Mat4::lookAt(
+		Vec3::normalize(uniforms.lights.sun.direction) * 200 + (uniforms.common.camPosition),
+		(uniforms.common.camPosition), Vec3(0,0,1)) * 
+		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 400.0);
+		scale *= 2.0;
+	}
+
+	for(int i=0;i<uniforms.lights.numSpotlights;i++){
+		uniforms.lights.spotlights[i].projViewCSM = Mat4::lookAt(
+			uniforms.lights.spotlights[i].position,
+			Vec3::normalize(uniforms.lights.spotlights[i].direction) + uniforms.lights.spotlights[i].position,
+			Vec3(0,0,1)
+		) * Mat4::perspective(acos(uniforms.lights.spotlights[i].cutOff) * 2.0, 1, 0.01, 100.0);
+	}
+
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(CommonUniforms), sizeof(LightUniforms), &uniforms.lights);
+}
+
+//Add a pointlight.
+void Renderer::pushLight(Pointlight light){
+	if(uniforms.lights.numPointlights < MAX_POINTLIGHTS){
+		uniforms.lights.pointlights[(Uint32)uniforms.lights.numPointlights] = light;
+		uniforms.lights.numPointlights++;
+	}else{
+		std::cout<<"WARNING: Pointlight capacity full. Cannot add more."<<std::endl;
+	}
+}
+
+//Add a spotlight.
+void Renderer::pushLight(Spotlight light){
+	if(uniforms.lights.numSpotlights < MAX_SPOTLIGHTS){
+		uniforms.lights.spotlights[(Uint32)uniforms.lights.numSpotlights] = light;
+		uniforms.lights.numSpotlights++;
+	}else{
+		std::cout<<"WARNING: Spotlight capacity full. Cannot add more."<<std::endl;
+	}
+}
+
+//Bind shadow map framebuffer.
+void Renderer::bindShadowFrame(){
+	glViewport(0, 0, settings.shadowWidth, settings.shadowHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
+}
+
+//Bind shadow map layer for drawing.
+void Renderer::bindShadowLayer(Uint32 layer){
+	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, layer);
+}
+
+//Clear shadow maps.
+void Renderer::clearShadows(){
+	for(int i=0;i<NUM_SUN_CASCADES + uniforms.lights.numSpotlights;i++){
+		bindShadowLayer(i);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_DEPTH_BUFFER_BIT);
+	}
+}
+
+//Draw a static model.
+void Renderer::drawModel(StaticModel* mesh, Mat4 model){
+	glBindVertexArray(mesh->vao);
+
+	//Draw to g buffer.
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	mesh->gProgram.use();
+	glUniformMatrix4fv(0, 1, false, model.ptr());
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, mesh->diffuse);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, mesh->metalRough);
+
+	glDrawArrays(GL_TRIANGLES, 0, mesh->numVertices);
+
+	//Draw to shadow map.
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
 }

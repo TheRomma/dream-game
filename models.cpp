@@ -70,63 +70,79 @@ bool StaticModel::init(const char* filename){
 
 	shadowProgram.init(
 		(glsl_header() + glsl_staticModelShadowVertex()).c_str(),
-		//(glsl_header() + glsl_emptyShader()).c_str()
 		(glsl_header() + glsl_commonUniforms() + glsl_allModelShadowFragment()).c_str()
 	);
 
-	buffer.init(9 * sizeof(float), file.attribLength, file.attributes);
-	buffer.setAttribute(0, 3);
-	buffer.setAttribute(1, 3);
-	buffer.setAttribute(2, 3);
+	numVertices = file.attribLength / (9 * sizeof(float));
 
-	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse, file.metalRough);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+	glBufferData(GL_ARRAY_BUFFER, file.attribLength, file.attributes, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)(0));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, false, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+
+	glGenTextures(1, &diffuse);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, file.texWidth, file.texHeight, file.texDepth, false, GL_RGBA, GL_FLOAT, file.diffuse);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glGenTextures(1, &metalRough);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RG32F, 1, 1, file.texDepth, false, GL_RG, GL_FLOAT, file.metalRough);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	return true;
+}
+
+//Static model destructor.
+StaticModel::~StaticModel(){
+	glDeleteTextures(1, &metalRough);
+	glDeleteTextures(1, &diffuse);
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
 }
 
 //Draw the 3d model onto g-buffers.
 void StaticModel::draw(Mat4 model){
 	gProgram.use();
 	glUniformMatrix4fv(0, 1, false, model.ptr());
-	buffer.bind();
-	material.bind(0);
 
-	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+	glBindVertexArray(vao);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
+
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
-//Draw the 3d model onto g-buffers.
-/*
-void StaticModel::drawShadow(Mat4 model, LightUniforms& lights){
-	shadowProgram.use();
-	glUniformMatrix4fv(0, 1, false, model.ptr());
-	buffer.bind();
-	material.bind(0);
-
-	Uint32 offset = 0;
-	for(unsigned int i=0;i<SUN_NUM_SHADOW_CASCADES;i++){
-		lights.shadows.bindLayer(i);
-		glUniformMatrix4fv(1, 1, false, lights.block.sun.projViewCSM[i].ptr());
-
-		glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
-	}
-
-	offset += SUN_NUM_SHADOW_CASCADES;
-	for(unsigned int i=0;i<lights.block.numSpotlights;i++){
-		lights.shadows.bindLayer(offset + i);
-		glUniformMatrix4fv(1, 1, false, lights.block.spotlights[i].projViewCSM.ptr());
-
-		glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
-	}
-}
-*/
 //Draw the 3d model onto a shadowmap.
 void StaticModel::drawShadow(Mat4 model, Mat4 view){
 	shadowProgram.use();
 	glUniformMatrix4fv(0, 1, false, model.ptr());
 	glUniformMatrix4fv(1, 1, false, view.ptr());
-	buffer.bind();
 
-	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+	glBindVertexArray(vao);
+
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 //------------------------------------------------------------------------------------
@@ -147,18 +163,47 @@ bool AnimatedModel::init(const char* filename){
 
 	shadowProgram.init(
 		(glsl_header() + glsl_animatedModelShadowVertex(numBones)).c_str(),
-		//(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_allModelShadowGeometry()).c_str(),
 		(glsl_header() + glsl_emptyShader()).c_str()
 	);
 
-	buffer.init(17 * sizeof(float), file.attribLength, file.attributes);
-	buffer.setAttribute(0, 3);
-	buffer.setAttribute(1, 3);
-	buffer.setAttribute(2, 3);
-	buffer.setAttribute(3, 4);
-	buffer.setAttribute(4, 4);
+	numVertices = file.attribLength / (17 * sizeof(float));
 
-	material.init(file.texWidth, file.texHeight, file.texDepth, GL_REPEAT, GL_LINEAR, file.diffuse, file.metalRough);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glGenBuffers(1, &vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+	glBufferData(GL_ARRAY_BUFFER, file.attribLength, file.attributes, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, false, 17 * sizeof(float), (void*)(0));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, false, 17 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, false, 17 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 4, GL_FLOAT, false, 17 * sizeof(float), (void*)(9 * sizeof(float)));
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 4, GL_FLOAT, false, 17 * sizeof(float), (void*)(13 * sizeof(float)));
+
+	glGenTextures(1, &diffuse);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, file.texWidth, file.texHeight, file.texDepth, false, GL_RGBA, GL_FLOAT, file.diffuse);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glGenTextures(1, &metalRough);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RG32F, 1, 1, file.texDepth, false, GL_RG, GL_FLOAT, file.metalRough);
+
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	joints = (Mat4*)malloc(numBones * sizeof(Mat4));
 	for(unsigned int i=0;i<numBones;i++){
@@ -166,6 +211,15 @@ bool AnimatedModel::init(const char* filename){
 	}
 
 	return true;
+}
+
+//Animated model destructor.
+AnimatedModel::~AnimatedModel(){
+	free(joints);
+	glDeleteTextures(1, &metalRough);
+	glDeleteTextures(1, &diffuse);
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
 }
 
 //Pose animated model.
@@ -180,10 +234,15 @@ void AnimatedModel::draw(Mat4 model){
 	gProgram.use();
 	glUniformMatrix4fv(0, 1, false, model.ptr());
 	glUniformMatrix4fv(2, numBones, false, joints[0].ptr());
-	buffer.bind();
-	material.bind(0);
 
-	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+	glBindVertexArray(vao);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
+
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 //Draw the 3d model onto a shadowmap.
@@ -192,9 +251,10 @@ void AnimatedModel::drawShadow(Mat4 model, Mat4 view){
 	glUniformMatrix4fv(0, 1, false, model.ptr());
 	glUniformMatrix4fv(1, 1, false, view.ptr());
 	glUniformMatrix4fv(2, numBones, false, joints[0].ptr());
-	buffer.bind();
 
-	glDrawArrays(GL_TRIANGLES, 0, buffer.numVertices);
+	glBindVertexArray(vao);
+
+	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 //------------------------------------------------------------------------------------

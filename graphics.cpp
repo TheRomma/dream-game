@@ -1,5 +1,4 @@
 #include "graphics.hpp"
-
 //Create a common vertex buffer.
 void VertexBuffer::init(Uint32 stride, Uint32 length, float* data){
 	glGenVertexArrays(1, &vao);
@@ -38,7 +37,7 @@ void VertexBuffer::setAttribute(Uint32 location, Uint32 size){
 		std::cout<<"WARNING: Vertex buffer attributes over stride!"<<std::endl;
 	}
 }
-
+/*
 //-------------------------------------------------------------------------------------------
 
 //Create a common material.
@@ -114,9 +113,9 @@ void ShaderBuffer::write(Uint32 offset, Uint32 length, char* data){
 void ShaderBuffer::bindBase(Uint32 base){
 	glBindBufferBase(type, base, buffer);
 }
-
+*/
 //-------------------------------------------------------------------------------------------
-
+/*
 //Create a ubo for common uniforms.
 CommonUniforms::CommonUniforms(){
 	ubo.init(GL_UNIFORM_BUFFER, UBO_COMMON_BASE, sizeof(CommonBlock), nullptr);
@@ -131,9 +130,9 @@ void CommonUniforms::bind(){
 void CommonUniforms::write(){
 	ubo.write(0, sizeof(CommonBlock), (char*)&block);
 }
-
+*/
 //-------------------------------------------------------------------------------------------
-
+/*
 //CSM init.
 void CSM::init(Uint32 width, Uint32 height, Uint32 numMaps){
 	this->width = width;
@@ -200,7 +199,7 @@ void CSM::clear(Uint32 numSun, Uint32 numSpot){
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 }
-
+*/
 //-------------------------------------------------------------------------
 
 #include "loaders.hpp"
@@ -245,7 +244,7 @@ void EnvironmentMap::init(const char* filename){
 
 	program.init(
 		(glsl_header() + glsl_commonUniforms() + glsl_displayCubeVertex()).c_str(),
-		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_environmentFragment()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_environmentFragment()).c_str()
 	);
 
 	float vertices[108] = {
@@ -324,7 +323,7 @@ void EnvironmentMap::display(){
 void ProceduralSky::init(){
 	program.init(
 		(glsl_header() + glsl_commonUniforms() + glsl_displayCubeVertex()).c_str(),
-		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() + glsl_skyFragment()).c_str()
+		(glsl_header() + glsl_commonUniforms() + glsl_skyFragment()).c_str()
 	);
 
 	float vertices[108] = {
@@ -383,12 +382,10 @@ void ProceduralSky::draw(){
 }
 
 //-------------------------------------------------------------------------
-
+/*
 //LightUniforms init.
-LightUniforms::LightUniforms(Uint32 shadowWidth, Uint32 shadowHeight, const char* environment){
+LightUniforms::LightUniforms(){
 	ubo.init(GL_UNIFORM_BUFFER, UBO_LIGHT_BASE, sizeof(LightBlock), nullptr);
-	shadows.init(shadowWidth, shadowHeight, NUM_SUN_CASCADES + MAX_SPOTLIGHTS);
-	envMap.init(environment);
 	this->reset();
 }
 
@@ -401,12 +398,6 @@ void LightUniforms::bind(){
 void LightUniforms::reset(){
 	block.numPointlights = block.numStaticPointlights;
 	block.numSpotlights = block.numStaticSpotlights;
-}
-
-//Reset number of static lights.
-void LightUniforms::resetStatic(){
-	block.numStaticPointlights = 0;
-	block.numStaticSpotlights = 0;
 }
 
 //Add a pointlight.
@@ -429,14 +420,6 @@ void LightUniforms::push(Spotlight light){
 	}
 }
 
-//Add permanent point- and spotlights.
-void LightUniforms::pushStatic(Pointlight* points, Uint32 numPoints, Spotlight* spots, Uint32 numSpots){
-	memcpy(block.pointlights, points, numPoints * sizeof(Pointlight));
-	memcpy(block.spotlights, spots, numSpots * sizeof(Spotlight));
-	block.numStaticPointlights = numPoints;
-	block.numStaticSpotlights = numSpots;
-}
-
 //Write to uniform buffer.
 void LightUniforms::write(){
 	ubo.write(0, sizeof(LightBlock), (char*)&block);
@@ -445,7 +428,6 @@ void LightUniforms::write(){
 
 //Calculate all shadow projections.
 void LightUniforms::calcShadowProjections(Vec3 position, Vec3 direction){
-	shadows.clear(NUM_SUN_CASCADES, block.numSpotlights);
 
 	float scale = 8.0;
 	for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
@@ -464,29 +446,9 @@ void LightUniforms::calcShadowProjections(Vec3 position, Vec3 direction){
 		) * Mat4::perspective(acos(block.spotlights[i].cutOff) * 2.0, 1, 0.01, 100.0);
 	}
 }
-
-//Bind shadow framebuffer.
-void LightUniforms::bindShadowFrame(){
-	shadows.bind();
-}
-
-//Bind shadow shadowmap.
-void LightUniforms::bindShadowMap(){
-	shadows.bindTexture(SHADOW_BASE);
-}
-
-//Bind environment map.
-void LightUniforms::bindEnvironmentMap(){
-	envMap.bind(4);
-}
-
-//Display environment map.
-void LightUniforms::displayEnvironmentMap(){
-	envMap.display();
-}
-
+*/
 //--------------------------------------------------------------------------------------------------
-
+/*
 DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	this->width = width;
 	this->height = height;
@@ -603,7 +565,7 @@ DeferredTarget::DeferredTarget(Uint32 width, Uint32 height){
 	//Setup programs.
 	deferredProgram.init(
 		(glsl_header() + glsl_displayQuadVertex()).c_str(),
-		(glsl_header() + glsl_commonUniforms() + glsl_commonLightStructs() +
+		(glsl_header() + glsl_commonUniforms() +
 			glsl_lightCalculations() + glsl_deferredLightPassFragment()).c_str()
 	);
 
@@ -721,7 +683,7 @@ void DeferredTarget::applyBloom(Uint32 blurPasses){
 	//Heavily blur resulting image.
 	gaussianBlurProgram.use();
 	
-	/*
+	
 	unsigned int horizontal = 0;
 	glBindFramebuffer(GL_FRAMEBUFFER, postBuffer[1 - horizontal]);
 	glUniform1i(1, horizontal);
@@ -735,7 +697,7 @@ void DeferredTarget::applyBloom(Uint32 blurPasses){
 	if(horizontal > 1){
 		horizontal = 0;
 	}
-	*/
+	
 
 	int horizontal = 0;
 	for(int i=0;i<blurPasses*2;i++){
@@ -824,5 +786,5 @@ void DeferredTarget::display(Uint32 displayWidth, Uint32 displayHeight){
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
-
+*/
 //-----------------------------------------------------------------------------------------

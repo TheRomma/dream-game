@@ -1,30 +1,33 @@
 #include "game.hpp"
 
-Uint32 startLayer(Uint32 type, Window* window, DeferredTarget* target){
+Uint32 startLayer(Uint32 type, Renderer* renderer){
 	switch(type){
 		case LAYER_TEST:
-			return L_Test(window, target);
+			return L_Test(renderer);
 
 		default:
 			return 0;
 	}
 }
 
-Uint32 L_Test(Window* window, DeferredTarget* target){
+Uint32 L_Test(Renderer* renderer){
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	bool mouseMode = true;
-	CommonUniforms uniform;
 	bool fullscreenMode = false;
 
 	Keyboard kb;
 	kb.init();
 
-	LightUniforms lights(1024, 1024, "res/test_skybox.em");
-	lights.block.sun.direction = Vec3::normalize(Vec3(-2.5,4,3));
-	lights.block.sun.ambient = Vec3(0.7,0.7,0.7);
-	lights.block.sun.diffuse = Vec3(8.0,8.0,7.0);
-	lights.write();
-	
+	EnvironmentMap emap;
+	emap.init("res/test_skybox.em");
+	//CSM shadows;
+	//shadows.init(1024, 1024, NUM_SUN_CASCADES + MAX_SPOTLIGHTS);
+
+	renderer->uniforms.lights.sun.direction = Vec3::normalize(Vec3(-2.5,4,3));
+	renderer->uniforms.lights.sun.ambient = Vec3(0.7,0.7,0.7);
+	renderer->uniforms.lights.sun.diffuse = Vec3(8.0,8.0,7.0);
+	renderer->updateLights();
+
 	CollisionHandler physics;
 
 	Player player;
@@ -60,62 +63,6 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 	float delta = 0.01;
 
-	Spotlight spot[10];
-
-	spot[0].position = Vec3(10, 14, 2);
-	spot[0].radius = 30;
-	spot[0].direction = Vec3(1.5, 1, 1);
-	spot[0].cutOff = cos(0.8);
-	spot[0].diffuse = Vec3(5, 0, 0);
-
-	spot[1] = spot[0];
-	spot[1].diffuse = Vec3(0, 5, 0);
-	spot[1].position = Vec3(10, 26, 2);
-	spot[1].direction = Vec3(1.5, -1, 1);
-
-	spot[2] = spot[0];
-	spot[2].diffuse = Vec3(0, 0, 5);
-	spot[2].position = Vec3(10, 14, 8);
-	spot[2].direction = Vec3(1.5, 1, -1);
-
-	spot[3] = spot[0];
-	spot[3].diffuse = Vec3(2, 2, 2);
-	spot[3].position = Vec3(10, 26, 8);
-	spot[3].direction = Vec3(1.5, -1, -1);
-
-	spot[4] = spot[0];
-	spot[4].diffuse = Vec3(3, 3, 3);
-	spot[4].position = Vec3(-38, 62, 12);
-	spot[4].direction = Vec3(1, 1, -2);
-
-	spot[5] = spot[0];
-	spot[5].diffuse = Vec3(5, 0, 0);
-	spot[5].position = Vec3(-38, 82, 12);
-	spot[5].direction = Vec3(1, -1, -2);
-
-	spot[6] = spot[0];
-	spot[6].diffuse = Vec3(0, 5, 0);
-	spot[6].position = Vec3(-17, 82, 12);
-	spot[6].direction = Vec3(0, -1, -2);
-
-	spot[7] = spot[0];
-	spot[7].diffuse = Vec3(0, 0, 5);
-	spot[7].position = Vec3(-2, 82, 12);
-	spot[7].direction = Vec3(-1, -1, -2);
-
-	spot[8] = spot[0];
-	spot[8].diffuse = Vec3(4, 4, 0);
-	spot[8].position = Vec3(-4, 67.5, 6);
-	spot[8].direction = Vec3(1, 1, 1);
-
-	spot[9] = spot[0];
-	spot[9].radius = 40;
-	spot[9].cutOff = cos(0.8);
-	spot[9].diffuse = Vec3(5, 3, 0);
-	spot[9].position = Vec3(-34, 12, 8);
-	spot[9].direction = Vec3(-1.5, 1, 0.5);
-
-	lights.pushStatic(nullptr, 0, spot, 10);
 	bool bloomOn = true;
 
 	BoundingSphere aModelBounds(Vec3(-38, 14, 4), 1.0, 1.0);
@@ -131,12 +78,6 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 					alive = false;
 					break;
 				
-				case SDL_WINDOWEVENT:
-					if(event.window.event == SDL_WINDOWEVENT_RESIZED){
-						window->eventResized();
-					}
-					break;
-
 				case SDL_MOUSEMOTION:
 					mouseX = event.motion.xrel;
 					mouseY = event.motion.yrel;
@@ -149,15 +90,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 				case SDL_KEYUP:
 					if(event.key.keysym.scancode == SDL_SCANCODE_F){
-						if(fullscreenMode){
-							fullscreenMode = false;
-							window->fullscreen(0);
-							window->eventResized();
-						}else{
-							fullscreenMode = true;
-							window->fullscreen(SDL_WINDOW_FULLSCREEN_DESKTOP);
-							window->eventResized();
-						}
+						renderer->toggleWindowFullscreen();
 					}
 					if(event.key.keysym.scancode == SDL_SCANCODE_ESCAPE){
 						alive = false;
@@ -176,14 +109,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 						}
 					}
 					if(event.key.keysym.scancode == SDL_SCANCODE_V){
-						player.camera.updateFrustum(uniform.block.projView.inverse());
-						/*
-						if(bloomOn){
-							bloomOn = false;
-						}else{
-							bloomOn = true;
-						}
-						*/
+						player.camera.updateFrustum(renderer->uniforms.common.projView.inverse());
 					}
 					break;
 			}
@@ -191,31 +117,82 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		//Update -------------------------------------------------------------------------
 		clock.update();
-		delta = clock.dt;
+		delta = (delta + clock.dt) * 0.5;
 		if(delta > 0.1){
 			delta = 0.1;
 		}
 
-
 		timer += delta;
 		player.input(delta, kb);
 		player.update(delta, physics, level.mesh);
-		uniform.block.position = player.camera.position;
+		renderer->uniforms.common.camPosition = player.camera.position;
 
-		//lights.block.sun.direction = Vec3::normalize(Vec3(-2.5,4,3+sin(timer)*5));
-		
 		animTimer += delta;
 		if(animTimer >= anim.duration){
 			animTimer = 0;
 		}
 		aModel.pose(anim, animTimer);
 
+
+		Spotlight spot;
+		spot.position = Vec3(10, 14, 2);
+		spot.radius = 30;
+		spot.direction = Vec3(1.5, 1, 1);
+		spot.cutOff = cos(0.8);
+		spot.diffuse = Vec3(5, 0, 0);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(0, 5, 0);
+		spot.position = Vec3(10, 26, 2);
+		spot.direction = Vec3(1.5, -1, 1);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(0, 0, 5);
+		spot.position = Vec3(10, 14, 8);
+		spot.direction = Vec3(1.5, 1, -1);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(2, 2, 2);
+		spot.position = Vec3(10, 26, 8);
+		spot.direction = Vec3(1.5, -1, -1);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(3, 3, 3);
+		spot.position = Vec3(-38, 62, 12);
+		spot.direction = Vec3(1, 1, -2);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(5, 0, 0);
+		spot.position = Vec3(-38, 82, 12);
+		spot.direction = Vec3(1, -1, -2);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(0, 5, 0);
+		spot.position = Vec3(-17, 82, 12);
+		spot.direction = Vec3(0, -1, -2);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(0, 0, 5);
+		spot.position = Vec3(-2, 82, 12);
+		spot.direction = Vec3(-1, -1, -2);
+		renderer->pushLight(spot);
+
+		spot.diffuse = Vec3(4, 4, 0);
+		spot.position = Vec3(-4, 67.5, 6);
+		spot.direction = Vec3(1, 1, 1);
+		renderer->pushLight(spot);
+
+		spot.radius = 40;
+		spot.cutOff = cos(0.8);
+		spot.diffuse = Vec3(5, 3, 0);
+		spot.position = Vec3(-34, 12, 8);
+		spot.direction = Vec3(-1.5, 1, 0.5);
+		renderer->pushLight(spot);
+
 		//Draw ---------------------------------------------------------------------------
 
 		//Gbuffer ------------------------------
-		target->bind();
-
-		lights.reset();
+		renderer->bindGBuffer();
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
@@ -224,13 +201,11 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-		Mat4 proj = Mat4::perspective(3.14 / 2, window->getAspect(), 0.01, 5.0);
-		uniform.block.projView = player.camera.getView() * proj;
+		renderer->uniforms.common.projView = player.camera.getView() * renderer->getWindowProjection(1.7);
 
-		uniform.block.time = timer;
+		renderer->uniforms.common.time = timer;
 
-		uniform.write();
-		lights.write();
+		renderer->updateCommons();
 
 		Vec3 ballPos_0 = Vec3(20, 20, 2) + Vec3(sin(timer)*5, cos(timer)*4, sin(timer*1.2));
 		Vec3 ballPos_1 = Vec3(20, 20, 6) + Vec3(sin(timer*2)*3, cos(timer*2)*4, cos(timer*1.4));
@@ -243,8 +218,7 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 		ball_0.draw(Mat4::translation(ballPos_1));
 
 		//Shadows ------------------------------
-		lights.bind();
-		lights.bindShadowFrame();
+		renderer->bindShadowFrame();
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
@@ -252,55 +226,39 @@ Uint32 L_Test(Window* window, DeferredTarget* target){
 
 		Vec3 front = player.camera.direction;
 
-		lights.calcShadowProjections(player.position, player.camera.direction);
-
-		lights.write();
-
-		//level.drawSunShadows(lights);
-		//aModel.drawShadow(animated_transforms, lights);
+		renderer->clearShadows();
+		renderer->updateLights();
 
 		Uint32 mapOffset = 0;
 		for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
-			lights.shadows.bindLayer(i);
-			level.drawSunShadows(lights.block.sun.projViewCSM[i]);
-			aModel.drawShadow(animated_transforms, lights.block.sun.projViewCSM[i]);
-			ball_0.drawShadow(Mat4::translation(ballPos_0), lights.block.sun.projViewCSM[i]);
-			ball_0.drawShadow(Mat4::translation(ballPos_1), lights.block.sun.projViewCSM[i]);
+			renderer->bindShadowLayer(i);
+			level.drawSunShadows(renderer->uniforms.lights.sun.projViewCSM[i]);
+			aModel.drawShadow(animated_transforms, renderer->uniforms.lights.sun.projViewCSM[i]);
+			ball_0.drawShadow(Mat4::translation(ballPos_0), renderer->uniforms.lights.sun.projViewCSM[i]);
+			ball_0.drawShadow(Mat4::translation(ballPos_1), renderer->uniforms.lights.sun.projViewCSM[i]);
 		}
 		mapOffset += NUM_SUN_CASCADES;
-		for(unsigned int i=0;i<lights.block.numSpotlights;i++){
-			lights.shadows.bindLayer(mapOffset + i);
-			level.drawSunShadows(lights.block.spotlights[i].projViewCSM);
-			aModel.drawShadow(animated_transforms, lights.block.spotlights[i].projViewCSM);
-			ball_0.drawShadow(Mat4::translation(ballPos_0), lights.block.spotlights[i].projViewCSM);
-			ball_0.drawShadow(Mat4::translation(ballPos_1), lights.block.spotlights[i].projViewCSM);
+		for(unsigned int i=0;i<renderer->uniforms.lights.numSpotlights;i++){
+			renderer->bindShadowLayer(mapOffset + i);
+			level.drawSunShadows(renderer->uniforms.lights.spotlights[i].projViewCSM);
+			aModel.drawShadow(animated_transforms, renderer->uniforms.lights.spotlights[i].projViewCSM);
+			ball_0.drawShadow(Mat4::translation(ballPos_0), renderer->uniforms.lights.spotlights[i].projViewCSM);
+			ball_0.drawShadow(Mat4::translation(ballPos_1), renderer->uniforms.lights.spotlights[i].projViewCSM);
 		}
 
-		//ball_0.drawShadow(Mat4::translation(ballPos_0), lights);
-		//ball_0.drawShadow(Mat4::translation(ballPos_1), lights);
+
 		//Display ------------------------------
-		lights.bindShadowMap();
-		lights.bindEnvironmentMap();
-		target->bindDisplay();
+		emap.bind(4);
+
+		renderer->bindDisplay();
+
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_CULL_FACE);
-		lights.displayEnvironmentMap();
+		emap.display();
 		//sky.draw();
-		target->draw();
-		/*
-		float kernel[9] = {
-			 1.0, 1.1, 1.0,
-			 1.1,-8.1, 1.1,
-			 1.0, 1.1, 1.0
-		};
-		*/
-		//target->applyKernel(kernel);
-		if(bloomOn)
-			target->applyBloom(5);
+		renderer->deferredPass();
 
-		target->display(window->width, window->height);
-
-		window->swap();
+		renderer->displayFrame();
 	}
 	return nextLayer;
 }

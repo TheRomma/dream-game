@@ -139,9 +139,33 @@ std::string glsl_emptyShader(){
 //Common uniforms in a ubo in glsl.
 std::string glsl_commonUniforms(){
 	std::string str = R"(
+		struct Sun{
+			vec3 direction;
+			vec3 ambient;
+			vec3 diffuse;
+			mat4 view[NUM_SUN_CASCADES];
+		};
+
+		struct Pointlight{
+			vec4 position;	//vec3 position, float radius
+			vec3 diffuse;
+		};
+
+		struct Spotlight{
+			vec4 position;	//vec3 position, float radius
+			vec4 direction;	//vec3 direction, float cutoff
+			vec3 diffuse;
+			mat4 view;
+		};
+
 		layout(std140, binding = UBO_BINDING) uniform U{
 			mat4 projView;
 			vec4 posTime;
+
+			Sun sun;
+			vec4 numLights;
+			Pointlight pointlights[MAX_POINTLIGHTS];
+			Spotlight spotlights[MAX_SPOTLIGHTS];
 		};
 
 		#define PI 3.14159265358979323846264
@@ -166,38 +190,33 @@ std::string glsl_commonUniforms(){
 		}
 	)";
 	str.replace(
+		str.find("NUM_SUN_CASCADES"),
+		std::string("NUM_SUN_CASCADES").length(),
+		std::to_string(NUM_SUN_CASCADES)
+	);
+	str.replace(
 		str.find("UBO_BINDING"),
 		std::string("UBO_BINDING").length(),
 		std::to_string(UBO_COMMON_BASE)
+	);
+	str.replace(
+		str.find("MAX_POINTLIGHTS"),
+		std::string("MAX_POINTLIGHTS").length(),
+		std::to_string(MAX_POINTLIGHTS)
+	);
+	str.replace(
+		str.find("MAX_SPOTLIGHTS"),
+		std::string("MAX_SPOTLIGHTS").length(),
+		std::to_string(MAX_SPOTLIGHTS)
 	);
 	return str;
 }
 
 //------------------------------------------------------------------------------------------
-
+/*
 //Common light structs in glsl.
 std::string glsl_commonLightStructs(){
 	std::string str = R"(
-		struct Sun{
-			vec3 direction;
-			vec3 ambient;
-			vec3 diffuse;
-			mat4 view[NUM_SUN_CASCADES];
-		};
-
-		struct Pointlight{
-			vec4 position;	//vec3 position, float radius
-			//vec3 ambient;
-			vec3 diffuse;
-		};
-
-		struct Spotlight{
-			vec4 position;	//vec3 position, float radius
-			vec4 direction;	//vec3 direction, float cutoff
-			//vec3 ambient;
-			vec3 diffuse;
-			mat4 view;
-		};
 
 		layout(std140, binding = LIGHT_UBO_BINDING) uniform L{
 			Sun sun;
@@ -228,7 +247,7 @@ std::string glsl_commonLightStructs(){
 	);
 	return str;
 }
-
+*/
 //------------------------------------------------------------------------------------------------------
 
 //Vertex shader program for static models.
@@ -469,17 +488,34 @@ std::string glsl_animatedModelShadowVertex(Uint32 numBones){
 //Simple vertex shader for drawing a screen sized quad.
 std::string glsl_displayQuadVertex(){
 	std::string str = R"(
-		layout(location = 0) in vec2 POSITION;
-		layout(location = 1) in vec2 UV_COORD;
+		vec2 positions[6] = {
+			vec2(-1.0, -1.0),
+			vec2( 1.0, -1.0),
+			vec2( 1.0,  1.0),
+                           
+			vec2( 1.0,  1.0),
+			vec2(-1.0,  1.0),
+			vec2(-1.0, -1.0)
+		};
+
+		vec2 uv_coords[6] = {
+			vec2(0.0, 0.0),
+			vec2(1.0, 0.0),
+			vec2(1.0, 1.0),
+                         
+			vec2(1.0, 1.0),
+			vec2(0.0, 1.0),
+			vec2(0.0, 0.0)
+		};
 
 		out VS_OUT{
 			vec2 uv_coord;
 		} F;
 
 		void main(){
-			gl_Position = vec4(POSITION, 0.0, 1.0);
+			gl_Position = vec4(positions[gl_VertexID], 0.0, 1.0);
 
-			F.uv_coord = UV_COORD;
+			F.uv_coord = uv_coords[gl_VertexID];
 		}
 	)";	
 	return str;
