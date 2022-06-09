@@ -189,6 +189,8 @@ int Renderer::init(RendererSettings settings){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL);
 	float border[4] = {1.0,1.0,1.0,1.0};
 	glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
 
@@ -197,12 +199,15 @@ int Renderer::init(RendererSettings settings){
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	drawQueue = (DrawRequest*)malloc(settings.rendererDrawQueueSize * sizeof(DrawRequest));
+
 	return 0;
 }
 
 //Renderer destructor.
 Renderer::~Renderer(){
-	glDeleteTextures(1, &shadowImages);
+	free(drawQueue);
+
 	glDeleteFramebuffers(1, &shadowBuffer);
 
 	glDeleteBuffers(1, &ubo);
@@ -442,6 +447,7 @@ void Renderer::clearShadows(){
 	}
 }
 
+/*
 //Draw a static model.
 void Renderer::drawModel(StaticModel* mesh, Mat4 model){
 	glBindVertexArray(mesh->vao);
@@ -466,3 +472,4 @@ void Renderer::drawModel(StaticModel* mesh, Mat4 model){
 	//Draw to shadow map.
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
 }
+*/

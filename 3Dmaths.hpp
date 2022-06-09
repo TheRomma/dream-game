@@ -15,6 +15,7 @@ struct Vec3{
 	//Operators
 	Vec3 operator+(const Vec3 u);
 	Vec3 operator-(const Vec3 u);
+	Vec3 operator*(const Vec3 u);
 	Vec3 operator*(float s);
 	Vec3 operator/(float s);
 	bool operator==(const Vec3 u);
@@ -37,6 +38,7 @@ struct Vec3{
 	float* ptr();
 	float length();
 	float manhattan();
+	Vec3 abs();
 
 	//Debug
 	void print();

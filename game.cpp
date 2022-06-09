@@ -11,6 +11,8 @@ Uint32 startLayer(Uint32 type, Renderer* renderer){
 }
 
 Uint32 L_Test(Renderer* renderer){
+	Uint64 frameStart, frameEnd;
+
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 	bool mouseMode = true;
 	bool fullscreenMode = false;
@@ -27,8 +29,6 @@ Uint32 L_Test(Renderer* renderer){
 	renderer->uniforms.lights.sun.ambient = Vec3(0.7,0.7,0.7);
 	renderer->uniforms.lights.sun.diffuse = Vec3(8.0,8.0,7.0);
 	renderer->updateLights();
-
-	CollisionHandler physics;
 
 	Player player;
 	player.init(Vec3(2,8,1), 1.57);
@@ -71,6 +71,7 @@ Uint32 L_Test(Renderer* renderer){
 	sky.init();
 
 	while(alive){
+		frameStart = SDL_GetPerformanceCounter();
 		//Input -------------------------------------------------------------------------
 		while(SDL_PollEvent(&event)){
 			switch(event.type){
@@ -118,13 +119,14 @@ Uint32 L_Test(Renderer* renderer){
 		//Update -------------------------------------------------------------------------
 		clock.update();
 		delta = (delta + clock.dt) * 0.5;
+		//delta = 0.05;
 		if(delta > 0.1){
 			delta = 0.1;
 		}
 
 		timer += delta;
 		player.input(delta, kb);
-		player.update(delta, physics, level.mesh);
+		player.update(delta, level.mesh);
 		renderer->uniforms.common.camPosition = player.camera.position;
 
 		animTimer += delta;
@@ -211,7 +213,7 @@ Uint32 L_Test(Renderer* renderer){
 		Vec3 ballPos_1 = Vec3(20, 20, 6) + Vec3(sin(timer*2)*3, cos(timer*2)*4, cos(timer*1.4));
 
 		level.draw();
-		if(physics.gjk(player.camera.frustum, aModelBounds)){
+		if(gjk(player.camera.frustum, aModelBounds)){
 			aModel.draw(animated_transforms);
 		}
 		ball_0.draw(Mat4::translation(ballPos_0));
@@ -259,6 +261,9 @@ Uint32 L_Test(Renderer* renderer){
 		renderer->deferredPass();
 
 		renderer->displayFrame();
+
+		frameEnd = SDL_GetPerformanceCounter();
+		//SDL_Delay(floor(50.0 - ((frameEnd - frameStart)/(float)SDL_GetPerformanceFrequency()*1000)));
 	}
 	return nextLayer;
 }

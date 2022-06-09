@@ -38,6 +38,11 @@ Vec3 Vec3::operator-(const Vec3 u){
 	return Vec3(x - u.x, y - u.y, z - u.z);
 }
 
+//Vec3 * operator against Vec3.
+Vec3 Vec3::operator*(const Vec3 u){
+	return Vec3(x * u.x, y * u.y, z * u.z);
+}
+
 //Vec3 * operator against float.
 Vec3 Vec3::operator*(float s){
 	return Vec3(x * s, y * s, z * s);
@@ -133,6 +138,11 @@ float Vec3::manhattan(){
 	return x + y + z;
 }
 
+//Return as absolute values.
+Vec3 Vec3::abs(){
+	return Vec3(fabs(x), fabs(y), fabs(z));
+}
+
 //Prints the three values.
 void Vec3::print(){
 	float* p = &x;
@@ -146,7 +156,13 @@ void Vec3::print(){
 
 //Mat4 constructor.
 Mat4::Mat4(){
-
+	float a[16] = {
+		1.0, 0.0, 0.0, 0.0,	
+		0.0, 1.0, 0.0, 0.0,	
+		0.0, 0.0, 1.0, 0.0,	
+		0.0, 0.0, 0.0, 1.0	
+	};
+	memcpy(this->m, a, 16 * sizeof(float));
 }
 
 //Mat4 constructor that takes a buffer.

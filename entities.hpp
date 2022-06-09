@@ -7,7 +7,7 @@
 
 #include <string>
 
-#define GRAVITY -9.81
+#define GRAVITY -9.81 * 2
 #define ANGLE_THRESHOLD 0.7
 
 struct C_Physics{
@@ -17,10 +17,10 @@ struct C_Physics{
 
 	void updateGravity(float delta);
 	void handleGravity(float delta);
-	void handleCollision(CollisionHandler& handler, PhysicsMesh& mesh);
+	void handleCollision(PhysicsMesh& mesh);
+	void update(float delta);
 
-	float gravVelocity;
-	//BoundingSphere collider;
+	Vec3 velocity;
 	SweptSphere collider;
 	bool onGround;
 };
@@ -31,7 +31,7 @@ struct Player{
 	~Player(){};
 
 	void input(float delta, Keyboard& kb);
-	void update(float delta, CollisionHandler& handler, PhysicsMesh& mesh);
+	void update(float delta, PhysicsMesh& mesh);
 
 	Vec3 position;
 	C_Physics physics;

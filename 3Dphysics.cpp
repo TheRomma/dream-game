@@ -313,7 +313,7 @@ BoundingSphere::BoundingSphere(Vec3 center, float radius, float aspect){
 Vec3 BoundingSphere::furthest(Vec3 direction){
 	Vec3 result = Vec3::normalize(direction) * radius;
 	result.z = result.z * verticalAspect;
-	return center + result;
+	return result + center;
 }
 
 //Swept sphere collider

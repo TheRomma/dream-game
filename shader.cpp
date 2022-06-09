@@ -620,7 +620,7 @@ std::string glsl_lightCalculations(){
 
 			return (kD * albedo / PI + specular) * radiance * NdotL;
 		}
-
+		
 		float calcPCF(int mapIndex, vec3 projectedPos, float currentDepth, sampler2DArray shadowMap){
 			float shadow = 0.0;
 			float pcfDepth = 0.0;
@@ -636,7 +636,7 @@ std::string glsl_lightCalculations(){
 			return shadow / 9;
 		}
 
-		float calcSunShadow(Sun light, vec3 position, int numShadowCascades, sampler2DArray shadowMap){
+		float calcSunShadow(Sun light, vec3 position, int numShadowCascades, sampler2DArrayShadow shadowMap){
 			int mapIndex = numShadowCascades - 1;
 			vec3 pos = posTime.rgb;
 			float distance = length(position - pos);
@@ -649,17 +649,12 @@ std::string glsl_lightCalculations(){
 			vec3 projPos = lightSpaceFrag.xyz / lightSpaceFrag.w;
 			if(projPos.z > 1.0){return 0.0;}
 			projPos = projPos * 0.5 + 0.5;
-			float currentDepth = projPos.z;
 			
-			float shadow = 0.0;
-			float pcfDepth = 0.0;
-			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
-
-			return calcPCF(mapIndex, projPos, currentDepth, shadowMap);
+			return texture(shadowMap, vec4(projPos.xy, float(mapIndex), projPos.z));
 		}
 
 		vec3 calcSunlight(Sun light, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough,
-			int numShadowCascades, sampler2DArray shadowMap
+			int numShadowCascades, sampler2DArrayShadow shadowMap
 		){
 			vec3 radiance = vec3(0.0);
 
@@ -711,23 +706,18 @@ std::string glsl_lightCalculations(){
 			return calcBRDF(albedo, radiance, normal, V, direction, F0, metalRough);
 		}
 
-		float calcSpotShadow(Spotlight light, vec3 position, int index, sampler2DArray shadowMap){
+		float calcSpotShadow(Spotlight light, vec3 position, int index, sampler2DArrayShadow shadowMap){
 			vec3 pos = posTime.rgb;
 
 			vec4 lightSpaceFrag = light.view * vec4(position.rgb, 1.0);
 			vec3 projPos = lightSpaceFrag.xyz / lightSpaceFrag.w;
 			if(projPos.z > 1.0){return 0.0;}
 			projPos = projPos * 0.5 + 0.5;
-			float currentDepth = projPos.z;
 			
-			float shadow = 0.0;
-			float pcfDepth = 0.0;
-			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
-
-			return calcPCF(index, projPos, currentDepth, shadowMap);
+			return texture(shadowMap, vec4(projPos.xy, float(index), projPos.z));
 		}
 
-		vec3 calcSpotlight(Spotlight light, int index, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough, sampler2DArray shadowMap){
+		vec3 calcSpotlight(Spotlight light, int index, vec3 position, vec3 normal, vec3 albedo, vec3 V, vec3 F0, vec2 metalRough, sampler2DArrayShadow shadowMap){
 			vec3 ab = light.position.rgb - position.rgb;
 			float distSquare = dot(ab, ab);
 
@@ -779,12 +769,11 @@ std::string glsl_deferredLightPassFragment(){
 	layout(binding = 0) uniform sampler2D u_position;
 	layout(binding = 1) uniform sampler2D u_normal;
 	layout(binding = 2) uniform sampler2D u_albedo;
-	layout(binding = SHADOW_BASE) uniform sampler2DArray u_shadowMap;
+	layout(binding = SHADOW_BASE) uniform sampler2DArrayShadow u_shadowMap;
 	layout(binding = 4) uniform samplerCube u_environmentMap;
 
 	void main(){
 
-		vec3 shadowTest = texture(u_shadowMap, vec3(F.uv_coord, 4.0)).rgb;
 		vec4 normal = texture(u_normal, F.uv_coord).rgba;
 		if(normal.rgb != vec3(0.0, 0.0, 0.0)){
 

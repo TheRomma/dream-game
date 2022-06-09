@@ -8,8 +8,8 @@
 #define GJK_MAX_ITER 10
 #define EPA_MAX_ITER 10
 
-#define GJK_THRESHOLD 0.001
-#define EPA_THRESHOLD 0.001
+#define GJK_THRESHOLD 0.1
+#define EPA_THRESHOLD 0.1
 
 //AABB collider for broad checks
 struct AABB{
@@ -125,63 +125,81 @@ struct Polytope{
 	std::vector<Polyface> faces;
 };
 
-//Collision detection & resolution
-struct CollisionHandler{
-	CollisionHandler(){};
-	~CollisionHandler(){};
+//GJK support point function.
+template<typename T, typename U>
+Vec3 support(T& a, U& b, Vec3 direction){
+	return a.furthest(direction) - b.furthest(direction * (-1));
+}
 
-	template<typename T, typename U>
-	Vec3 support(T& a, U& b, Vec3 direction){
-		return a.furthest(direction) - b.furthest(direction * (-1));
-	}
-	//GJK
-	template<typename T, typename U>
-	bool gjk(T& a, U& b){
-		simplex.reset();
-
-		Vec3 direction(1, 0, 0);
-		Vec3 newPoint = support(a, b, direction);
-		simplex.append(newPoint);
-
-		direction = newPoint * (-1);
-
-		for(unsigned int i=0;i<GJK_MAX_ITER;i++){
-			newPoint = support(a, b, direction);
-			if(Vec3::dot(newPoint, direction) <= 0){return false;}
-
-			if(simplex.expand(newPoint, direction)){
-				return true;
-			}
-		}
-
-		return false;
-	}
-	//EPA
-	template<typename T, typename U>
-	void epa(T& a, U& b, Vec3& normal, float& distance){
-		polytope.reset(simplex.ptr());
-
-		unsigned int facei;
-		Vec3 norm;
-		float dist;
-		Vec3 newPoint;
-		float dot;
-
-		for(unsigned int i=0;i<EPA_MAX_ITER;i++){
-			polytope.closestFace(facei, norm, dist);
-			newPoint = support(a, b, norm);
-			dot = Vec3::dot(norm, newPoint);
-			if(dist - EPA_THRESHOLD < dot
-				&& dot < dist + EPA_THRESHOLD){
-				break;
-			}
-			polytope.expand(newPoint);
-		}
-		normal = norm * (-1);
-		distance = dist;
-	}
-
-	private:
-	Simplex simplex;
+//EPA collision resolution function.
+template<typename T, typename U>
+void epa(Simplex& simplex, T& a, U& b, Vec3& normal, float& distance){
 	Polytope polytope;
-};
+	polytope.reset(simplex.ptr());
+
+	unsigned int facei;
+	Vec3 norm;
+	float dist;
+	Vec3 newPoint;
+	float dot;
+
+	for(unsigned int i=0;i<EPA_MAX_ITER;i++){
+		polytope.closestFace(facei, norm, dist);
+		newPoint = support(a, b, norm);
+		dot = Vec3::dot(norm, newPoint);
+		if(dist - EPA_THRESHOLD < dot
+			&& dot < dist + EPA_THRESHOLD){
+			break;
+		}
+		polytope.expand(newPoint);
+	}
+	normal = norm * (-1);
+	distance = dist;
+}
+
+//GJK collision detection function.
+template<typename T, typename U>
+bool gjk(T& a, U& b, Vec3 initDir = Vec3(1, 0, 0)){
+	Simplex simplex;
+
+	Vec3 direction = initDir;
+	Vec3 newPoint = support(a, b, direction);
+	simplex.append(newPoint);
+
+	direction = newPoint * (-1);
+
+	for(unsigned int i=0;i<GJK_MAX_ITER;i++){
+		newPoint = support(a, b, direction);
+		if(Vec3::dot(newPoint, direction) <= 0){return false;}
+
+		if(simplex.expand(newPoint, direction)){
+			return true;
+		}
+	}
+
+	return false;
+}
+
+//GJK collision detection function.
+template<typename T, typename U>
+bool gjk(T& a, U& b, Vec3& normal, float& distance, Vec3 initDir = Vec3(1, 0, 0)){
+	Simplex simplex;
+
+	Vec3 direction = initDir;
+	Vec3 newPoint = support(a, b, direction);
+	simplex.append(newPoint);
+
+	direction = newPoint * (-1);
+
+	for(unsigned int i=0;i<GJK_MAX_ITER;i++){
+		newPoint = support(a, b, direction);
+		if(Vec3::dot(newPoint, direction) <= 0){return false;}
+
+		if(simplex.expand(newPoint, direction)){
+			epa(simplex, a, b, normal, distance);
+			return true;
+		}
+	}
+
+	return false;
+}

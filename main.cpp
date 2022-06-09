@@ -12,6 +12,7 @@ int main(int argc, const char* argv[]){
 	RendererSettings settings;
 	settings.frameWidth = 1920;
 	settings.frameHeight = 1080;
+	//settings.windowVsync = 0;
 	renderer.init(settings);
 
 	Uint32 next = LAYER_TEST;

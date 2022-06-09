@@ -1,40 +1,49 @@
 #include "entities.hpp"
 
 C_Physics::C_Physics(float radius, float aspect, Vec3 centerPos){
-	gravVelocity = 0;
+	velocity.z = 0;
 	onGround = false;
 	collider = SweptSphere(centerPos, radius, aspect);
 }
 
 void C_Physics::updateGravity(float delta){
-	gravVelocity += GRAVITY * delta;
+	velocity.z += GRAVITY * delta;
 }
 
 void C_Physics::handleGravity(float delta){
-	collider.getNext()->center.z += gravVelocity * delta * 2.5;
+	collider.getNext()->center.z += velocity.z * delta * 2.5;
 }
 
-void C_Physics::handleCollision(CollisionHandler& handler, PhysicsMesh& mesh){
-	float distance = 0;
-	Vec3 normal(0,0,0);
-
-	onGround = false;
-
-	for(unsigned int i=0;i<mesh.numConvexes;i++){
-		if(handler.gjk(collider, mesh.convexes[i])){
-			handler.epa(collider, mesh.convexes[i], normal, distance);
-			if(normal.z > ANGLE_THRESHOLD && gravVelocity < 0){
-				gravVelocity = 0;
+void C_Physics::handleCollision(PhysicsMesh& mesh){
+	Vec3 initDir = Vec3::cross(Vec3::normalize(Vec3(velocity.x+0.01, velocity.y, 0.0)), Vec3(0.0, 0.0, 1.0));
+	float distance = 0.0;
+	Vec3 normal(0.0, 0.0, 0.0);
+	for(int i=0;i<mesh.numConvexes;i++){
+		if(gjk(collider, mesh.convexes[i], normal, distance, initDir)){
+			velocity.x -= velocity.x * fabs(normal.x);
+			velocity.y -= velocity.y * fabs(normal.y);
+			if(normal.z > ANGLE_THRESHOLD && velocity.z < 0){
+				velocity.z = 0;
 				onGround = true;
-			}else if(normal.z < -ANGLE_THRESHOLD && gravVelocity > 0){
-				gravVelocity = 0;
+			}else if(normal.z < -ANGLE_THRESHOLD && velocity.z > 0){
+				velocity.z = 0;
 			}else{
-				gravVelocity -= gravVelocity * normal.z * normal.z * 0.03;
+				velocity.z -= velocity.z * normal.z * normal.z * 0.03;
 			}
 			collider.getNext()->center = collider.getNext()->center + normal * distance;
 			collider.getPrev()->center = collider.getPrev()->center + normal * distance;
 		}
 	}
+}
+
+void C_Physics::update(float delta){
+	velocity.z += GRAVITY * delta;
+	velocity.z = fmin(velocity.z, 50.0);
+	collider.getNext()->center = collider.getPrev()->center + velocity * delta;
+	//velocity.x -= velocity.x * delta * 20;
+	//velocity.y -= velocity.y * delta * 20;
+
+	onGround = false;
 }
 
 void Player::init(Vec3 position, float yaw){
@@ -50,23 +59,24 @@ void Player::input(float delta, Keyboard& kb){
 
 	Vec3 camRight = camera.getRight();
 	Vec3 camFront = Vec3::normalize(Vec3(camera.direction.x, camera.direction.y, 0.0));
-	if(kb.keyPressed(SDL_SCANCODE_W)){position = position + camFront * ((4 + runBonus) * delta);}
-	if(kb.keyPressed(SDL_SCANCODE_S)){position = position - camFront * ((4 + runBonus) * delta);}
-	if(kb.keyPressed(SDL_SCANCODE_A)){position = position - camRight * ((4 + runBonus) * delta);}
-	if(kb.keyPressed(SDL_SCANCODE_D)){position = position + camRight * ((4 + runBonus) * delta);}
+
+	physics.velocity.x = 0.0;
+	physics.velocity.y = 0.0;
+	if(kb.keyPressed(SDL_SCANCODE_W)){physics.velocity = physics.velocity + camFront * ((4 + runBonus));}
+	if(kb.keyPressed(SDL_SCANCODE_S)){physics.velocity = physics.velocity - camFront * ((4 + runBonus));}
+	if(kb.keyPressed(SDL_SCANCODE_A)){physics.velocity = physics.velocity - camRight * ((4 + runBonus));}
+	if(kb.keyPressed(SDL_SCANCODE_D)){physics.velocity = physics.velocity + camRight * ((4 + runBonus));}
 	
 	if(physics.onGround){
-		if(kb.keyPressed(SDL_SCANCODE_SPACE)){physics.gravVelocity = 8.0;}
+		if(kb.keyPressed(SDL_SCANCODE_SPACE)){physics.velocity.z = 16.0;}
 	}
 }
 
-void Player::update(float delta, CollisionHandler& handler, PhysicsMesh& mesh){
+void Player::update(float delta, PhysicsMesh& mesh){
 	physics.collider.swapSpheres();
-	physics.collider.getNext()->center = position + Vec3(0,0,1);
 
-	physics.updateGravity(delta);
-	physics.handleCollision(handler, mesh);
-	physics.handleGravity(delta);
+	physics.update(delta);
+	physics.handleCollision(mesh);
 
 	position = physics.collider.getNext()->center + Vec3(0,0,-1);
 	camera.position = position + Vec3(0,0,1.8);

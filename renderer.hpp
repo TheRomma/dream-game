@@ -23,7 +23,7 @@ struct Sun{
 //Pointlight data.
 struct Pointlight{
 	Vec3 position;
-	float radius;
+	float radius = 10.0;
 	Vec3 diffuse;
 		char padding1[4];
 };
@@ -31,9 +31,9 @@ struct Pointlight{
 //Spotlight data.
 struct Spotlight{
 	Vec3 position;
-	float radius;
+	float radius = 10.0;
 	Vec3 direction;
-	float cutOff;
+	float cutOff = 1.5;
 	Vec3 diffuse;
 		char padding1[4];
 	Mat4 projViewCSM;
@@ -43,15 +43,15 @@ struct Spotlight{
 struct CommonUniforms{
 	Mat4 projView;
 	Vec3 camPosition;
-	float time;
+	float time = 0.0;
 };
 
 //Light uniforms.
 struct LightUniforms{
 	Sun sun;
-	float numPointlights;
+	float numPointlights = 0.0;
 		char padding1[4];
-	float numSpotlights;
+	float numSpotlights = 0.0;
 		char padding0[4];
 	Pointlight pointlights[MAX_POINTLIGHTS];	
 	Spotlight spotlights[MAX_SPOTLIGHTS];	
@@ -61,6 +61,19 @@ struct LightUniforms{
 struct UniformBlock{
 	CommonUniforms common;
 	LightUniforms lights;
+};
+
+//Draw request packet.
+struct DrawRequest{
+	Uint32 gProgram = 0;
+	Uint32 shadowProgram = 0;
+	Uint32 vao = 0;	
+	Uint32 diffuse = 0;
+	Uint32 metalRough = 0;
+	Animation* anim = nullptr;
+	float animTime = 0.0;
+	Mat4 model;
+	float cullRadius;
 };
 
 //Settings for the renderer.
@@ -82,6 +95,8 @@ struct RendererSettings{
 
 	Uint32 shadowWidth = 1024;
 	Uint32 shadowHeight = 1024;
+
+	Uint32 rendererDrawQueueSize = 128;
 };
 
 //Renderer.
@@ -108,7 +123,8 @@ struct Renderer{
 	void bindShadowLayer(Uint32 layer);//Temp?
 	void clearShadows();//Temp?
 
-	void drawModel(StaticModel* mesh, Mat4 model);
+	void pushModel(StaticModel* mesh, Mat4 model);
+	void pushModel(AnimatedModel* mesh, Mat4 model);
 
 	UniformBlock uniforms;
 	RendererSettings settings;
@@ -128,4 +144,6 @@ struct Renderer{
 	Uint32 ubo;
 
 	Uint32 shadowBuffer, shadowImages;
+
+	DrawRequest* drawQueue = nullptr;
 };
