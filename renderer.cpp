@@ -199,6 +199,8 @@ int Renderer::init(RendererSettings settings){
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	numRequests = 0;
+	mostBones = 0;
 	drawQueue = (DrawRequest*)malloc(settings.rendererDrawQueueSize * sizeof(DrawRequest));
 
 	return 0;
@@ -251,12 +253,6 @@ Mat4 Renderer::getWindowProjection(float hFov){
 	return Mat4::perspective(hFov, aspect, 0.1, 100.0);
 }
 
-//Bind g buffer.
-void Renderer::bindGBuffer(){
-	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-	glViewport(0, 0, settings.frameWidth, settings.frameHeight);
-}
-
 //Bind display buffer.
 void Renderer::bindDisplay(){
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
@@ -265,6 +261,104 @@ void Renderer::bindDisplay(){
 
 //Deferred lighting pass.
 void Renderer::deferredPass(){
+	//Calculate shadow projections.
+	float scale = 8.0;
+	for(int i=0;i<NUM_SUN_CASCADES;i++){
+		uniforms.lights.sun.projViewCSM[i] = Mat4::lookAt(
+		Vec3::normalize(uniforms.lights.sun.direction) * 200 + (uniforms.common.camPosition),
+		(uniforms.common.camPosition), Vec3(0,0,1)) * 
+		Mat4::orthographic(-scale, scale, -scale, scale, 0.01, 400.0);
+		scale *= 2.0;
+	}
+
+	for(int i=0;i<uniforms.lights.numSpotlights;i++){
+		uniforms.lights.spotlights[i].projViewCSM = Mat4::lookAt(
+			uniforms.lights.spotlights[i].position,
+			Vec3::normalize(uniforms.lights.spotlights[i].direction) + uniforms.lights.spotlights[i].position,
+			Vec3(0,0,1)
+		) * Mat4::perspective(acos(uniforms.lights.spotlights[i].cutOff) * 2.0, 1, 0.01, 100.0);
+	}
+
+	//Update uniforms.
+	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UniformBlock), &uniforms);
+
+	//Draw queued models.
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	glViewport(0, 0, settings.frameWidth, settings.frameHeight);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+	Mat4 joints[mostBones];
+
+	for(int i=0;i<numRequests;i++){
+		glUseProgram(drawQueue[i].gProgram);
+		glUniformMatrix4fv(0, 1, false, drawQueue[i].model.ptr());
+
+		glBindVertexArray(drawQueue[i].vao);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, drawQueue[i].diffuse);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, drawQueue[i].metalRough);
+
+		if(drawQueue[i].anim != nullptr){
+			drawQueue[i].anim->calcJointTransforms(joints, drawQueue[i].animTime);
+			glUniformMatrix4fv(2, drawQueue[i].numBones, false, joints[0].ptr());
+		}
+
+		glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
+	}
+
+	//Clear shadow maps.
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
+	glViewport(0, 0, settings.shadowWidth, settings.shadowHeight);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
+	for(int i=0;i<NUM_SUN_CASCADES + uniforms.lights.numSpotlights;i++){
+		glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, i);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_DEPTH_BUFFER_BIT);
+	}
+
+	//Draw shadow maps.
+	for(int i=0;i<numRequests;i++){
+		glUseProgram(drawQueue[i].shadowProgram);
+		glUniformMatrix4fv(0, 1, false, drawQueue[i].model.ptr());
+
+		if(drawQueue[i].anim != nullptr){
+			drawQueue[i].anim->calcJointTransforms(joints, drawQueue[i].animTime);
+			glUniformMatrix4fv(2, drawQueue[i].numBones, false, joints[0].ptr());
+		}
+
+		glBindVertexArray(drawQueue[i].vao);
+
+		for(int j=0;j<NUM_SUN_CASCADES;j++){
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, j);
+			glUniformMatrix4fv(1, 1, false, uniforms.lights.sun.projViewCSM[j].ptr());
+
+			glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
+		}
+
+		for(int j=0;j<uniforms.lights.numSpotlights;j++){
+			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, j + NUM_SUN_CASCADES);
+			glUniformMatrix4fv(1, 1, false, uniforms.lights.spotlights[j].projViewCSM.ptr());
+
+			glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
+		}
+	}
+
+	numRequests = 0;
+	mostBones = 0;
+
 	//Deferred pass.
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -378,35 +472,6 @@ void Renderer::displayFrame(){
 	SDL_GL_SwapWindow(window);
 }
 
-//Update common uniforms.
-void Renderer::updateCommons(){
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(CommonUniforms), &uniforms.common);
-}
-
-//Update common uniforms and calculate shadow projections.
-void Renderer::updateLights(){
-	float scale = 8.0;
-	for(int i=0;i<NUM_SUN_CASCADES;i++){
-		uniforms.lights.sun.projViewCSM[i] = Mat4::lookAt(
-		Vec3::normalize(uniforms.lights.sun.direction) * 200 + (uniforms.common.camPosition),
-		(uniforms.common.camPosition), Vec3(0,0,1)) * 
-		Mat4::orthographic(-scale, scale, -scale, scale, 0.1, 400.0);
-		scale *= 2.0;
-	}
-
-	for(int i=0;i<uniforms.lights.numSpotlights;i++){
-		uniforms.lights.spotlights[i].projViewCSM = Mat4::lookAt(
-			uniforms.lights.spotlights[i].position,
-			Vec3::normalize(uniforms.lights.spotlights[i].direction) + uniforms.lights.spotlights[i].position,
-			Vec3(0,0,1)
-		) * Mat4::perspective(acos(uniforms.lights.spotlights[i].cutOff) * 2.0, 1, 0.01, 100.0);
-	}
-
-	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(CommonUniforms), sizeof(LightUniforms), &uniforms.lights);
-}
-
 //Add a pointlight.
 void Renderer::pushLight(Pointlight light){
 	if(uniforms.lights.numPointlights < MAX_POINTLIGHTS){
@@ -427,49 +492,46 @@ void Renderer::pushLight(Spotlight light){
 	}
 }
 
-//Bind shadow map framebuffer.
-void Renderer::bindShadowFrame(){
-	glViewport(0, 0, settings.shadowWidth, settings.shadowHeight);
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
-}
+//Add static model to the draw queue.
+void Renderer::drawModel(StaticModel* mesh, Mat4 model){
+	if(numRequests < settings.rendererDrawQueueSize){
+		DrawRequest request;
+		request.gProgram = mesh->gProgram.program;
+		request.shadowProgram = mesh->shadowProgram.program;
+		request.vao = mesh->vao;
+		request.numVertices = mesh->numVertices;
+		request.diffuse = mesh->diffuse;
+		request.metalRough = mesh->metalRough;
+		request.anim = nullptr;
+		request.numBones = 0;
+		request.animTime = 0.0;
+		request.model = model;
+		request.centroid = model * Vec3(0.0, 0.0, 0.0);
+		request.cullRadius = 1.0;
 
-//Bind shadow map layer for drawing.
-void Renderer::bindShadowLayer(Uint32 layer){
-	glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, layer);
-}
-
-//Clear shadow maps.
-void Renderer::clearShadows(){
-	for(int i=0;i<NUM_SUN_CASCADES + uniforms.lights.numSpotlights;i++){
-		bindShadowLayer(i);
-		glClearColor(0.0, 0.0, 0.0, 1.0);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		drawQueue[numRequests++] = request;
 	}
 }
 
-/*
-//Draw a static model.
-void Renderer::drawModel(StaticModel* mesh, Mat4 model){
-	glBindVertexArray(mesh->vao);
+//Add static model to the draw queue.
+void Renderer::drawModel(AnimatedModel* mesh, Mat4 model, Animation* anim, float animTime){
+	if(numRequests < settings.rendererDrawQueueSize){
+		DrawRequest request;
+		request.gProgram = mesh->gProgram.program;
+		request.shadowProgram = mesh->shadowProgram.program;
+		request.vao = mesh->vao;
+		request.numVertices = mesh->numVertices;
+		request.diffuse = mesh->diffuse;
+		request.metalRough = mesh->metalRough;
+		request.anim = anim;
+		request.numBones = mesh->numBones;
+		request.animTime = animTime;
+		request.model = model;
+		request.centroid = model * Vec3(0.0, 0.0, 0.0);
+		request.cullRadius = 1.0;
 
-	//Draw to g buffer.
-	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		drawQueue[numRequests++] = request;
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-
-	mesh->gProgram.use();
-	glUniformMatrix4fv(0, 1, false, model.ptr());
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, mesh->diffuse);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, mesh->metalRough);
-
-	glDrawArrays(GL_TRIANGLES, 0, mesh->numVertices);
-
-	//Draw to shadow map.
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowBuffer);
+		mostBones = std::max(mostBones, request.numBones);
+	}
 }
-*/

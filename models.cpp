@@ -25,33 +25,43 @@ Animation::~Animation(){
 	}
 }
 
-Mat4 Animation::calcJoint(Uint32 boneIndex, float time){
-	if(boneIndex >= numBones){
-		return Mat4::identity();
-	}
-
-	float frametime = time * (24.0f / animRate);
-	if(frametime >= numFrames - 1){
-		return Mat4::identity();
-	}
-
+void Animation::calcJointTransforms(Mat4* joints, float time){
 	double keyIndex = 0;
-	float fraction = modf(frametime, &keyIndex);
+	float fraction = 0;
+	Uint32 last = 0;
+	Uint32 next = 0;
 
-	Uint32 last = (Uint32)keyIndex * numBones + boneIndex;
-	Uint32 next = (Uint32)(keyIndex + 1) * numBones + boneIndex;
+	Vec3 position;
+	Quat rotation;
+	Vec3 scale;
 
-	Vec3 position = Vec3::interpolate(transforms[last].translation, transforms[next].translation, fraction);
-	Quat rotation = Quat::slerp(transforms[last].rotation, transforms[next].rotation, fraction);
-	Vec3 scale = Vec3::interpolate(transforms[last].scaling, transforms[next].scaling, fraction);
+	Mat4 transMat;
+	Mat4 rotMat;
+	Mat4 scaleMat;
 
-	Mat4 transMat = Mat4::translation(position);
-	Mat4 rotMat = rotation.toMatrix();
-	Mat4 scaleMat = Mat4::scale(scale);
+	float frametime = time * (24.0 / animRate);
+	if(frametime >= numFrames - 1){
+		for(int i=0;i<numBones;i++){
+			joints[i] = Mat4::identity();
+		}
+	}else{
+		for(int i=0;i<numBones;i++){
+			fraction = modf(frametime, &keyIndex);
 
-	Mat4 result = scaleMat * rotMat * transMat;
+			last = (Uint32)keyIndex * numBones + i;
+			next = (Uint32)(keyIndex + 1) * numBones + i;
 
-	return result;
+			position = Vec3::interpolate(transforms[last].translation, transforms[next].translation, fraction);
+			rotation = Quat::slerp(transforms[last].rotation, transforms[next].rotation, fraction);
+			scale = Vec3::interpolate(transforms[last].scaling, transforms[next].scaling, fraction);
+
+			transMat = Mat4::translation(position);
+			rotMat = rotation.toMatrix();
+			scaleMat = Mat4::scale(scale);
+
+			joints[i] = scaleMat * rotMat * transMat;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------------------------
@@ -119,32 +129,6 @@ StaticModel::~StaticModel(){
 	glDeleteVertexArrays(1, &vao);
 }
 
-//Draw the 3d model onto g-buffers.
-void StaticModel::draw(Mat4 model){
-	gProgram.use();
-	glUniformMatrix4fv(0, 1, false, model.ptr());
-
-	glBindVertexArray(vao);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
-
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
-}
-
-//Draw the 3d model onto a shadowmap.
-void StaticModel::drawShadow(Mat4 model, Mat4 view){
-	shadowProgram.use();
-	glUniformMatrix4fv(0, 1, false, model.ptr());
-	glUniformMatrix4fv(1, 1, false, view.ptr());
-
-	glBindVertexArray(vao);
-
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
-}
-
 //------------------------------------------------------------------------------------
 
 //Create a drawable 3d model.
@@ -205,56 +189,15 @@ bool AnimatedModel::init(const char* filename){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	joints = (Mat4*)malloc(numBones * sizeof(Mat4));
-	for(unsigned int i=0;i<numBones;i++){
-		joints[i] = Mat4::identity();
-	}
-
 	return true;
 }
 
 //Animated model destructor.
 AnimatedModel::~AnimatedModel(){
-	free(joints);
 	glDeleteTextures(1, &metalRough);
 	glDeleteTextures(1, &diffuse);
 	glDeleteBuffers(1, &vbo);
 	glDeleteVertexArrays(1, &vao);
-}
-
-//Pose animated model.
-void AnimatedModel::pose(Animation& anim, float time){
-	for(unsigned int i=0;i<numBones;i++){
-		joints[i] = anim.calcJoint(i, time);
-	}
-}	
-
-//Draw the 3d model onto g-buffers.
-void AnimatedModel::draw(Mat4 model){
-	gProgram.use();
-	glUniformMatrix4fv(0, 1, false, model.ptr());
-	glUniformMatrix4fv(2, numBones, false, joints[0].ptr());
-
-	glBindVertexArray(vao);
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, diffuse);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, metalRough);
-
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
-}
-
-//Draw the 3d model onto a shadowmap.
-void AnimatedModel::drawShadow(Mat4 model, Mat4 view){
-	shadowProgram.use();
-	glUniformMatrix4fv(0, 1, false, model.ptr());
-	glUniformMatrix4fv(1, 1, false, view.ptr());
-	glUniformMatrix4fv(2, numBones, false, joints[0].ptr());
-
-	glBindVertexArray(vao);
-
-	glDrawArrays(GL_TRIANGLES, 0, numVertices);
 }
 
 //------------------------------------------------------------------------------------

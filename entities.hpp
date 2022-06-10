@@ -44,9 +44,6 @@ struct Level{
 	void init(std::string filename);
 	~Level(){};
 
-	void draw();
-	void drawSunShadows(Mat4 view);
-
 	StaticModel model;
 	PhysicsMesh mesh;
 };

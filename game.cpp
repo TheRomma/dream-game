@@ -28,7 +28,6 @@ Uint32 L_Test(Renderer* renderer){
 	renderer->uniforms.lights.sun.direction = Vec3::normalize(Vec3(-2.5,4,3));
 	renderer->uniforms.lights.sun.ambient = Vec3(0.7,0.7,0.7);
 	renderer->uniforms.lights.sun.diffuse = Vec3(8.0,8.0,7.0);
-	renderer->updateLights();
 
 	Player player;
 	player.init(Vec3(2,8,1), 1.57);
@@ -133,8 +132,6 @@ Uint32 L_Test(Renderer* renderer){
 		if(animTimer >= anim.duration){
 			animTimer = 0;
 		}
-		aModel.pose(anim, animTimer);
-
 
 		Spotlight spot;
 		spot.position = Vec3(10, 14, 2);
@@ -192,63 +189,17 @@ Uint32 L_Test(Renderer* renderer){
 		renderer->pushLight(spot);
 
 		//Draw ---------------------------------------------------------------------------
-
-		//Gbuffer ------------------------------
-		renderer->bindGBuffer();
-
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
-		glClearColor(0.0, 0.0, 0.0, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-
 		renderer->uniforms.common.projView = player.camera.getView() * renderer->getWindowProjection(1.7);
 
 		renderer->uniforms.common.time = timer;
 
-		renderer->updateCommons();
-
 		Vec3 ballPos_0 = Vec3(20, 20, 2) + Vec3(sin(timer)*5, cos(timer)*4, sin(timer*1.2));
 		Vec3 ballPos_1 = Vec3(20, 20, 6) + Vec3(sin(timer*2)*3, cos(timer*2)*4, cos(timer*1.4));
 
-		level.draw();
-		if(gjk(player.camera.frustum, aModelBounds)){
-			aModel.draw(animated_transforms);
-		}
-		ball_0.draw(Mat4::translation(ballPos_0));
-		ball_0.draw(Mat4::translation(ballPos_1));
-
-		//Shadows ------------------------------
-		renderer->bindShadowFrame();
-
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
-
-		Vec3 front = player.camera.direction;
-
-		renderer->clearShadows();
-		renderer->updateLights();
-
-		Uint32 mapOffset = 0;
-		for(unsigned int i=0;i<NUM_SUN_CASCADES;i++){
-			renderer->bindShadowLayer(i);
-			level.drawSunShadows(renderer->uniforms.lights.sun.projViewCSM[i]);
-			aModel.drawShadow(animated_transforms, renderer->uniforms.lights.sun.projViewCSM[i]);
-			ball_0.drawShadow(Mat4::translation(ballPos_0), renderer->uniforms.lights.sun.projViewCSM[i]);
-			ball_0.drawShadow(Mat4::translation(ballPos_1), renderer->uniforms.lights.sun.projViewCSM[i]);
-		}
-		mapOffset += NUM_SUN_CASCADES;
-		for(unsigned int i=0;i<renderer->uniforms.lights.numSpotlights;i++){
-			renderer->bindShadowLayer(mapOffset + i);
-			level.drawSunShadows(renderer->uniforms.lights.spotlights[i].projViewCSM);
-			aModel.drawShadow(animated_transforms, renderer->uniforms.lights.spotlights[i].projViewCSM);
-			ball_0.drawShadow(Mat4::translation(ballPos_0), renderer->uniforms.lights.spotlights[i].projViewCSM);
-			ball_0.drawShadow(Mat4::translation(ballPos_1), renderer->uniforms.lights.spotlights[i].projViewCSM);
-		}
-
-
+		renderer->drawModel(&level.model, Mat4::identity());
+		renderer->drawModel(&aModel, animated_transforms, &anim, animTimer);
+		renderer->drawModel(&ball_0, Mat4::translation(ballPos_0));
+		renderer->drawModel(&ball_0, Mat4::translation(ballPos_1));
 		//Display ------------------------------
 		emap.bind(4);
 

@@ -33,7 +33,7 @@ struct Shader{
 
 	void use();
 
-	private:
+	//private:
 	Uint32 program;			//Shader program handler.
 };
 

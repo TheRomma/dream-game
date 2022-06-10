@@ -16,7 +16,7 @@ struct Animation{
 	bool init(const char* filename);
 	~Animation();
 
-	Mat4 calcJoint(Uint32 bone, float time);
+	void calcJointTransforms(Mat4* joints, float time);
 
 	float duration;
 
@@ -33,9 +33,6 @@ struct StaticModel{
 	bool init(const char* filename);
 	~StaticModel();
 
-	void draw(Mat4 model);
-	void drawShadow(Mat4 model, Mat4 view);
-
 	Uint32 numVertices;
 
 	Shader gProgram, shadowProgram;
@@ -49,12 +46,7 @@ struct AnimatedModel{
 	bool init(const char* filename);
 	~AnimatedModel();
 
-	void pose(Animation& anim, float time);
-	void draw(Mat4 model);
-	void drawShadow(Mat4 model, Mat4 view);
-
 	Uint32 numVertices, numBones;
-	Mat4* joints;
 
 	Shader gProgram, shadowProgram;
 	Uint32 vao, vbo;

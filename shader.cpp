@@ -620,21 +620,6 @@ std::string glsl_lightCalculations(){
 
 			return (kD * albedo / PI + specular) * radiance * NdotL;
 		}
-		
-		float calcPCF(int mapIndex, vec3 projectedPos, float currentDepth, sampler2DArray shadowMap){
-			float shadow = 0.0;
-			float pcfDepth = 0.0;
-			vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
-
-			for(int i=-1;i<=1;i++){
-				for(int j=-1;j<=1;j++){
-					pcfDepth = texture(shadowMap, vec3((projectedPos.xy + vec2(i,j) * texelSize), float(mapIndex))).r;
-					shadow += (currentDepth) > (pcfDepth) ? 1.0 : 0.0;
-				}
-			}
-
-			return shadow / 9;
-		}
 
 		float calcSunShadow(Sun light, vec3 position, int numShadowCascades, sampler2DArrayShadow shadowMap){
 			int mapIndex = numShadowCascades - 1;

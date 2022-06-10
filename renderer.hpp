@@ -68,12 +68,15 @@ struct DrawRequest{
 	Uint32 gProgram = 0;
 	Uint32 shadowProgram = 0;
 	Uint32 vao = 0;	
+	Uint32 numVertices = 0;
 	Uint32 diffuse = 0;
 	Uint32 metalRough = 0;
 	Animation* anim = nullptr;
+	Uint32 numBones = 0;
 	float animTime = 0.0;
 	Mat4 model;
-	float cullRadius;
+	Vec3 centroid;
+	float cullRadius = 1.0;
 };
 
 //Settings for the renderer.
@@ -108,23 +111,16 @@ struct Renderer{
 	void toggleWindowFullscreen();
 	Mat4 getWindowProjection(float hFov);//Temp?
 
-	void bindGBuffer();//Temp?
 	void bindDisplay();//Temp?
 	void deferredPass();
 	void applyBloom(Uint32 blurPasses);
 	void displayFrame();
 
-	void updateCommons();//Temp?
-	void updateLights();//Temp?
 	void pushLight(Pointlight light);
 	void pushLight(Spotlight light);
 
-	void bindShadowFrame();//Temp?
-	void bindShadowLayer(Uint32 layer);//Temp?
-	void clearShadows();//Temp?
-
-	void pushModel(StaticModel* mesh, Mat4 model);
-	void pushModel(AnimatedModel* mesh, Mat4 model);
+	void drawModel(StaticModel* mesh, Mat4 model);
+	void drawModel(AnimatedModel* mesh, Mat4 model, Animation* anim, float animTime);
 
 	UniformBlock uniforms;
 	RendererSettings settings;
@@ -145,5 +141,6 @@ struct Renderer{
 
 	Uint32 shadowBuffer, shadowImages;
 
+	Uint32 numRequests, mostBones;
 	DrawRequest* drawQueue = nullptr;
 };

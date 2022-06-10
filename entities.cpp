@@ -86,11 +86,3 @@ void Level::init(std::string filename){
 	model.init((filename + ".sm").c_str());
 	mesh.init((filename + ".pm").c_str());
 }
-
-void Level::draw(){
-	model.draw(Mat4::identity());
-}
-
-void Level::drawSunShadows(Mat4 view){
-	model.drawShadow(Mat4::identity(), view);
-}
