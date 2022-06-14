@@ -1,5 +1,6 @@
 #include "system.hpp"
 
+/*
 //Camera init.
 void Camera::init(Vec3 position, float yaw, float pitch, float sensitivity){
 	this->position = position;
@@ -61,6 +62,7 @@ void Camera::updateFrustum(Mat4 invProjView){
 	}
 	std::cout<<std::endl;
 }
+*/
 
 //--------------------------------------------------------------------------------------------------------
 
@@ -79,7 +81,7 @@ void Clock::update(){
 }
 
 //--------------------------------------------------------------------------------------------------------
-
+/*
 //SDL Window wrapper init.
 bool Window::init(const char* title, Uint32 width, Uint32 height, Uint32 flags){
 	this->width = width;
@@ -136,7 +138,7 @@ float Window::getAspect(){
 void Window::eventResized(){
 	SDL_GetWindowSize(window, (int*)&width, (int*)&height);
 }
-
+*/
 //----------------------------------------------------------------------------------------------------------
 
 //SDL keyboard state wrapper.

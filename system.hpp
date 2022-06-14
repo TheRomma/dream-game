@@ -7,6 +7,7 @@
 #include "3Dmaths.hpp"
 #include "3Dphysics.hpp"
 
+/*
 //Camera
 struct Camera{
 	Camera(){};
@@ -27,6 +28,7 @@ struct Camera{
 	Vec3 corners[8];
 	BoundingConvex frustum;
 };
+*/
 
 //Clock
 struct Clock{
@@ -38,7 +40,7 @@ struct Clock{
 	float now, prev, dt;
 };
 
-
+/*
 //SDL Window & OpenGL context.
 struct Window{
 	Window(){};
@@ -60,7 +62,7 @@ struct Window{
 	SDL_Window* window;
 	SDL_GLContext context;
 };
-
+*/
 //SDL Keyboard state.
 struct Keyboard{
 	Keyboard(){};

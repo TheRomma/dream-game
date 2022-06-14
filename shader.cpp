@@ -163,7 +163,7 @@ std::string glsl_commonUniforms(){
 			vec4 posTime;
 
 			Sun sun;
-			vec4 numLights;
+			vec4 NLightsGamExp;
 			Pointlight pointlights[MAX_POINTLIGHTS];
 			Spotlight spotlights[MAX_SPOTLIGHTS];
 		};
@@ -555,7 +555,7 @@ std::string glsl_displayAndToneFragment(){
 
 		void main(){
 			vec3 color = texture(u_image, F.uv_coord).rgb;
-			outColor = vec4(toneMapping(color, 1.0, 1.1), 1.0);
+			outColor = vec4(toneMapping(color, NLightsGamExp.b, NLightsGamExp.a), 1.0);
 			//outColor = texture(u_image, vec2((F.uv_coord.x + cos(posTime.a + F.uv_coord.y * 10) * 0.02) * 0.96 + 0.02, F.uv_coord.y));
 			//outColor = texture(u_image, vec2((F.uv_coord.x + noise(gl_FragCoord.xyz) * 0.1) * 0.8 + 0.1, F.uv_coord.y));
 		}
@@ -706,7 +706,7 @@ std::string glsl_lightCalculations(){
 			vec3 ab = light.position.rgb - position.rgb;
 			float distSquare = dot(ab, ab);
 
-			if(distSquare > light.position.a * light.position.a){
+			if((distSquare) > light.position.a * light.position.a){
 				return vec3(0.0);
 			}
 
@@ -790,13 +790,13 @@ std::string glsl_deferredLightPassFragment(){
 					result += calcSunlight(sun, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, NUM_SUN_CASCADES, u_shadowMap);
 
 					//Pointlights
-					for(int i=0;i<numLights.r;i++){
+					for(int i=0;i<NLightsGamExp.r;i++){
 						result += calcPointlight(pointlights[i], position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough);
 					}
 
 					offset += NUM_SUN_CASCADES;
 					//Spotlights
-					for(int i=0;i<numLights.b;i++){
+					for(int i=0;i<NLightsGamExp.g;i++){
 						result += calcSpotlight(spotlights[i], offset + i, position.rgb, normal.rgb, albedo.rgb, V, F0, metalRough, u_shadowMap);
 					}
 				}

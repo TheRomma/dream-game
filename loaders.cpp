@@ -38,11 +38,14 @@ StaticModelLoader::StaticModelLoader(const char* filename){
 		metalRough = (float*)malloc(metalRoughLength);
 		file.read((char*)metalRough, metalRoughLength);
 
+		file.read((char*)centroid, 12);
+		file.read((char*)&cullRadius, 4);
+
 		//Construct textures from indexed sources.
 		Uint32 numTexels = texWidth * texHeight * texDepth;
 		texLength = numTexels * 4 * sizeof(float);
 		diffuse = (float*)malloc(texLength);
-		for(unsigned int i=0;i<numTexels;i++){
+		for(int i=0;i<numTexels;i++){
 			diffuse[i*4] = diffColors[diffIndices[i]*4];
 			diffuse[i*4+1] = diffColors[diffIndices[i]*4+1];
 			diffuse[i*4+2] = diffColors[diffIndices[i]*4+2];
@@ -102,6 +105,9 @@ AnimatedModelLoader::AnimatedModelLoader(const char* filename){
 		file.read((char*)&metalRoughLength, 4);
 		metalRough = (float*)malloc(metalRoughLength);
 		file.read((char*)metalRough, metalRoughLength);
+
+		file.read((char*)centroid, 12);
+		file.read((char*)&cullRadius, 4);
 
 		//Armature.
 		file.read((char*)&numBones, 4);

@@ -25,6 +25,9 @@ struct StaticModelLoader{
 
 	Uint32 metalRoughLength;//Length of the metallic & roughness map.
 	float* metalRough;		//Metallic & roughness map.
+
+	float centroid[3];
+	float cullRadius;
 };
 
 //Loader for animated model data.
@@ -48,6 +51,9 @@ struct AnimatedModelLoader{
 
 	Uint32 metalRoughLength;//Length of the metallic & roughness map.
 	float* metalRough;		//Metallic & roughness map.
+
+	float centroid[3];
+	float cullRadius;
 
 	//Armature data.
 	Uint32 numBones;		//Number of bones supported by model.

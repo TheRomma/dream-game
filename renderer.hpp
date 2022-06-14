@@ -6,6 +6,7 @@
 
 #include "shader.hpp"
 #include "models.hpp"
+#include "3Dphysics.hpp"
 
 #define UBO_BINDING 0
 
@@ -50,9 +51,9 @@ struct CommonUniforms{
 struct LightUniforms{
 	Sun sun;
 	float numPointlights = 0.0;
-		char padding1[4];
 	float numSpotlights = 0.0;
-		char padding0[4];
+	float gamma = 1.0;
+	float exposure = 1.1;
 	Pointlight pointlights[MAX_POINTLIGHTS];	
 	Spotlight spotlights[MAX_SPOTLIGHTS];	
 };
@@ -94,12 +95,14 @@ struct RendererSettings{
 	Uint32 frameBlurWidth = 256;
 	Uint32 frameBlurHeight = 144;
 	Uint32 frameBloom = 5;
-	float frameHFov = 1.7;
 
 	Uint32 shadowWidth = 1024;
 	Uint32 shadowHeight = 1024;
 
 	Uint32 rendererDrawQueueSize = 128;
+
+	float cameraSensitivity = 0.002;
+	float cameraFov = 1.7;
 };
 
 //Renderer.
@@ -109,7 +112,6 @@ struct Renderer{
 	~Renderer();
 
 	void toggleWindowFullscreen();
-	Mat4 getWindowProjection(float hFov);//Temp?
 
 	void bindDisplay();//Temp?
 	void deferredPass();
@@ -121,6 +123,12 @@ struct Renderer{
 
 	void drawModel(StaticModel* mesh, Mat4 model);
 	void drawModel(AnimatedModel* mesh, Mat4 model, Animation* anim, float animTime);
+
+	void setCameraView(float yaw, float pitch);
+	void updateCameraView(float Xrelative, float Yrelative);
+	Vec3 getCameraDirection();
+	Vec3 getCameraRight();
+	Vec3 getCameraFront();
 
 	UniformBlock uniforms;
 	RendererSettings settings;
@@ -138,9 +146,16 @@ struct Renderer{
 	Shader deferredProgram, displayProgram, moveProgram, combineProgram, kernelProgram, blurProgram;
 
 	Uint32 ubo;
+	Uint32 numPointlights;
+	Uint32 numSpotlights;
 
 	Uint32 shadowBuffer, shadowImages;
 
 	Uint32 numRequests, mostBones;
 	DrawRequest* drawQueue = nullptr;
+
+	float pitch, yaw;
+	Vec3 camDirection;
+	Vec3 frustumCorners[8];
+	BoundingConvex camFrustum;
 };

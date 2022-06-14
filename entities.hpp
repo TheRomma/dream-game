@@ -4,6 +4,7 @@
 #include "3Dphysics.hpp"
 #include "models.hpp"
 #include "system.hpp"
+#include "renderer.hpp"
 
 #include <string>
 
@@ -27,15 +28,14 @@ struct C_Physics{
 
 struct Player{
 	Player(){};
-	void init(Vec3 position, float yaw);
+	void init(Vec3 position);
 	~Player(){};
 
-	void input(float delta, Keyboard& kb);
-	void update(float delta, PhysicsMesh& mesh);
+	void input(float delta, Keyboard& kb, Vec3 right, Vec3 front);
+	void update(float delta, PhysicsMesh& mesh, Renderer* renderer);
 
 	Vec3 position;
 	C_Physics physics;
-	Camera camera;
 	float runBonus;
 };
 

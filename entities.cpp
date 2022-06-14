@@ -46,19 +46,15 @@ void C_Physics::update(float delta){
 	onGround = false;
 }
 
-void Player::init(Vec3 position, float yaw){
+void Player::init(Vec3 position){
 	this->position = position;
 	physics = C_Physics(1.2, 1.65, position + Vec3(0,0,1));
-	camera.init(position + Vec3(0,0,1.8), yaw, 0.0, 0.002);
 	runBonus = 0.0;
 }
 
-void Player::input(float delta, Keyboard& kb){
+void Player::input(float delta, Keyboard& kb, Vec3 camRight, Vec3 camFront){
 	if(kb.keyPressed(SDL_SCANCODE_LSHIFT)){runBonus = 4.0;}
 	else{runBonus = 0.0;}
-
-	Vec3 camRight = camera.getRight();
-	Vec3 camFront = Vec3::normalize(Vec3(camera.direction.x, camera.direction.y, 0.0));
 
 	physics.velocity.x = 0.0;
 	physics.velocity.y = 0.0;
@@ -72,14 +68,14 @@ void Player::input(float delta, Keyboard& kb){
 	}
 }
 
-void Player::update(float delta, PhysicsMesh& mesh){
+void Player::update(float delta, PhysicsMesh& mesh, Renderer* renderer){
 	physics.collider.swapSpheres();
 
 	physics.update(delta);
 	physics.handleCollision(mesh);
 
 	position = physics.collider.getNext()->center + Vec3(0,0,-1);
-	camera.position = position + Vec3(0,0,1.8);
+	renderer->uniforms.common.camPosition = position + Vec3(0,0,1.8);
 }
 
 void Level::init(std::string filename){

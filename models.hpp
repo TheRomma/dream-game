@@ -38,6 +38,9 @@ struct StaticModel{
 	Shader gProgram, shadowProgram;
 	Uint32 vao, vbo;
 	Uint32 diffuse, metalRough;
+
+	Vec3 centroid;
+	float cullRadius;
 };
 
 //A drawable 3d model.
@@ -51,6 +54,9 @@ struct AnimatedModel{
 	Shader gProgram, shadowProgram;
 	Uint32 vao, vbo;
 	Uint32 diffuse, metalRough;
+
+	Vec3 centroid;
+	float cullRadius;
 };
 
 //Physics mesh

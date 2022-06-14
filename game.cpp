@@ -22,15 +22,15 @@ Uint32 L_Test(Renderer* renderer){
 
 	EnvironmentMap emap;
 	emap.init("res/test_skybox.em");
-	//CSM shadows;
-	//shadows.init(1024, 1024, NUM_SUN_CASCADES + MAX_SPOTLIGHTS);
 
 	renderer->uniforms.lights.sun.direction = Vec3::normalize(Vec3(-2.5,4,3));
 	renderer->uniforms.lights.sun.ambient = Vec3(0.7,0.7,0.7);
 	renderer->uniforms.lights.sun.diffuse = Vec3(8.0,8.0,7.0);
+	renderer->uniforms.lights.exposure = 1.2;
+	renderer->setCameraView(1.57, 0.0);
 
 	Player player;
-	player.init(Vec3(2,8,1), 1.57);
+	player.init(Vec3(2,8,1));
 
 	Level level;
 	level.init("res/tech_demo");
@@ -55,19 +55,7 @@ Uint32 L_Test(Renderer* renderer){
 	bool alive = true;
 	SDL_Event event;
 	Uint32 nextLayer = 0;
-
-	bool updateFlashlight = true;
-	Vec3 flashlightPos = Vec3(0.0, 0.0, 0.0);
-	Vec3 flashlightDir = Vec3(0.0, 0.0, 0.0);
-
 	float delta = 0.01;
-
-	bool bloomOn = true;
-
-	BoundingSphere aModelBounds(Vec3(-38, 14, 4), 1.0, 1.0);
-
-	ProceduralSky sky;
-	sky.init();
 
 	while(alive){
 		frameStart = SDL_GetPerformanceCounter();
@@ -85,7 +73,7 @@ Uint32 L_Test(Renderer* renderer){
 					if(mouseY > 50|mouseY < -50){mouseY = 0;}
 					if(mouseX > 50|mouseX < -50){mouseX = 0;}
 
-					player.camera.mouseUpdate(mouseX, mouseY);
+					renderer->updateCameraView(mouseX, mouseY);
 					break;
 
 				case SDL_KEYUP:
@@ -108,9 +96,11 @@ Uint32 L_Test(Renderer* renderer){
 							SDL_SetRelativeMouseMode(SDL_TRUE);
 						}
 					}
+					/*
 					if(event.key.keysym.scancode == SDL_SCANCODE_V){
 						player.camera.updateFrustum(renderer->uniforms.common.projView.inverse());
 					}
+					*/
 					break;
 			}
 		}
@@ -124,9 +114,8 @@ Uint32 L_Test(Renderer* renderer){
 		}
 
 		timer += delta;
-		player.input(delta, kb);
-		player.update(delta, level.mesh);
-		renderer->uniforms.common.camPosition = player.camera.position;
+		player.input(delta, kb, renderer->getCameraRight(), renderer->getCameraFront());
+		player.update(delta, level.mesh, renderer);
 
 		animTimer += delta;
 		if(animTimer >= anim.duration){
@@ -189,7 +178,7 @@ Uint32 L_Test(Renderer* renderer){
 		renderer->pushLight(spot);
 
 		//Draw ---------------------------------------------------------------------------
-		renderer->uniforms.common.projView = player.camera.getView() * renderer->getWindowProjection(1.7);
+		//renderer->uniforms.common.projView = player.camera.getView() * renderer->getWindowProjection(1.5);
 
 		renderer->uniforms.common.time = timer;
 
@@ -209,7 +198,6 @@ Uint32 L_Test(Renderer* renderer){
 		glDisable(GL_CULL_FACE);
 		emap.display();
 		//sky.draw();
-		renderer->deferredPass();
 
 		renderer->displayFrame();
 

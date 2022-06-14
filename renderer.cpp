@@ -45,7 +45,7 @@ int Renderer::init(RendererSettings settings){
 	//Normal and roughness data.
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, settings.frameWidth, settings.frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, settings.frameWidth, settings.frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -55,7 +55,7 @@ int Renderer::init(RendererSettings settings){
 	//Albedo and metallic data.
 	glGenTextures(1, &gAlbedo);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, settings.frameWidth, settings.frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, settings.frameWidth, settings.frameHeight, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -84,7 +84,7 @@ int Renderer::init(RendererSettings settings){
 	//Final display image.
 	glGenTextures(1, &displayImage);
 	glBindTexture(GL_TEXTURE_2D, displayImage);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, settings.frameWidth, settings.frameHeight, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, settings.frameWidth, settings.frameHeight, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -104,7 +104,7 @@ int Renderer::init(RendererSettings settings){
 	glGenTextures(2, blurImage);
 
 	glBindTexture(GL_TEXTURE_2D, postImage);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, settings.frameWidth, settings.frameHeight, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, settings.frameWidth, settings.frameHeight, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -117,7 +117,7 @@ int Renderer::init(RendererSettings settings){
 	glBindFramebuffer(GL_FRAMEBUFFER, blurBuffer[0]);
 
 	glBindTexture(GL_TEXTURE_2D, blurImage[0]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 256, 144, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 256, 144, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -127,7 +127,7 @@ int Renderer::init(RendererSettings settings){
 	glBindFramebuffer(GL_FRAMEBUFFER, blurBuffer[1]);
 
 	glBindTexture(GL_TEXTURE_2D, blurImage[1]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 256, 144, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 256, 144, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -199,9 +199,23 @@ int Renderer::init(RendererSettings settings){
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	//Light queue stuff.
+	numPointlights = 0;
+	numSpotlights = 0;
+
+	//Draw queue stuff.
 	numRequests = 0;
 	mostBones = 0;
 	drawQueue = (DrawRequest*)malloc(settings.rendererDrawQueueSize * sizeof(DrawRequest));
+
+	//Camera stuff.
+	pitch = 0.0;
+	yaw = 0.0;
+	camDirection.x = cos(yaw) * cos(pitch);
+	camDirection.z = sin(pitch);
+	camDirection.y = sin(yaw) * cos(pitch);
+
+	camFrustum = BoundingConvex(frustumCorners, 8);
 
 	return 0;
 }
@@ -242,17 +256,6 @@ void Renderer::toggleWindowFullscreen(){
 	}
 }
 
-//Calculate a correct perspective projection for the window.
-Mat4 Renderer::getWindowProjection(float hFov){
-	int width, height;
-	SDL_GetWindowSize(window, &width, &height);
-
-	float aspect = (float)width/(float)height;
-	float vFov = 2 * atan(tan(hFov*0.5)*aspect);
-
-	return Mat4::perspective(hFov, aspect, 0.1, 100.0);
-}
-
 //Bind display buffer.
 void Renderer::bindDisplay(){
 	glBindFramebuffer(GL_FRAMEBUFFER, displayBuffer);
@@ -279,9 +282,40 @@ void Renderer::deferredPass(){
 		) * Mat4::perspective(acos(uniforms.lights.spotlights[i].cutOff) * 2.0, 1, 0.01, 100.0);
 	}
 
+	//Set all remaining uniforms.
+	int width, height;
+	SDL_GetWindowSize(window, &width, &height);
+
+	float aspect = (float)width/(float)height;
+	//float vFov = 2 * atan(tan(settings.cameraFov*0.5)*aspect);
+
+	uniforms.common.projView = Mat4::lookAt(
+			uniforms.common.camPosition, uniforms.common.camPosition + camDirection, Vec3(0.0, 0.0, 1.0)
+		) * Mat4::perspective(settings.cameraFov, aspect, 0.1, 100.0);
+
+	uniforms.lights.numPointlights = (float)numPointlights;
+	uniforms.lights.numSpotlights = (float)numSpotlights;
+
 	//Update uniforms.
 	glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(UniformBlock), &uniforms);
+
+	//Update camera frustum.
+	frustumCorners[0] = Vec3(-1, -1, -1);
+	frustumCorners[1] = Vec3( 1, -1, -1);
+	frustumCorners[2] = Vec3( 1,  1, -1);
+	frustumCorners[3] = Vec3(-1,  1, -1);
+	frustumCorners[4] = Vec3(-1, -1,  1);
+	frustumCorners[5] = Vec3( 1, -1,  1);
+	frustumCorners[6] = Vec3( 1,  1,  1);
+	frustumCorners[7] = Vec3(-1,  1,  1);
+
+	Mat4 invProjView = uniforms.common.projView.inverse();
+	float w = 0;
+	for(unsigned int i=0;i<8;i++){
+		frustumCorners[i] = invProjView.transform(frustumCorners[i], 1.0, w);
+		frustumCorners[i] = frustumCorners[i] / w;
+	}
 
 	//Draw queued models.
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -295,24 +329,29 @@ void Renderer::deferredPass(){
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 	Mat4 joints[mostBones];
+	BoundingSphere cullSphere(Vec3(0,0,0), 1.0, 1.0);
 
 	for(int i=0;i<numRequests;i++){
-		glUseProgram(drawQueue[i].gProgram);
-		glUniformMatrix4fv(0, 1, false, drawQueue[i].model.ptr());
+		cullSphere.center = drawQueue[i].centroid;
+		cullSphere.radius = drawQueue[i].cullRadius;
+		if(gjk(camFrustum, cullSphere)){
+			glUseProgram(drawQueue[i].gProgram);
+			glUniformMatrix4fv(0, 1, false, drawQueue[i].model.ptr());
 
-		glBindVertexArray(drawQueue[i].vao);
+			glBindVertexArray(drawQueue[i].vao);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, drawQueue[i].diffuse);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, drawQueue[i].metalRough);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, drawQueue[i].diffuse);
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, drawQueue[i].metalRough);
 
-		if(drawQueue[i].anim != nullptr){
-			drawQueue[i].anim->calcJointTransforms(joints, drawQueue[i].animTime);
-			glUniformMatrix4fv(2, drawQueue[i].numBones, false, joints[0].ptr());
+			if(drawQueue[i].anim != nullptr){
+				drawQueue[i].anim->calcJointTransforms(joints, drawQueue[i].animTime);
+				glUniformMatrix4fv(2, drawQueue[i].numBones, false, joints[0].ptr());
+			}
+
+			glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
 		}
-
-		glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
 	}
 
 	//Clear shadow maps.
@@ -328,6 +367,8 @@ void Renderer::deferredPass(){
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
+
+	BoundingSphere lightSphere(Vec3(0,0,0), 1.0, 1.0);
 
 	//Draw shadow maps.
 	for(int i=0;i<numRequests;i++){
@@ -349,10 +390,14 @@ void Renderer::deferredPass(){
 		}
 
 		for(int j=0;j<uniforms.lights.numSpotlights;j++){
-			glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, j + NUM_SUN_CASCADES);
-			glUniformMatrix4fv(1, 1, false, uniforms.lights.spotlights[j].projViewCSM.ptr());
+			lightSphere.center = uniforms.lights.spotlights[j].position;
+			lightSphere.radius = uniforms.lights.spotlights[j].radius;
+			if(gjk(camFrustum, lightSphere)){
+				glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowImages, 0, j + NUM_SUN_CASCADES);
+				glUniformMatrix4fv(1, 1, false, uniforms.lights.spotlights[j].projViewCSM.ptr());
 
-			glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
+				glDrawArrays(GL_TRIANGLES, 0, drawQueue[i].numVertices);
+			}
 		}
 	}
 
@@ -381,8 +426,8 @@ void Renderer::deferredPass(){
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	//Reset light uniforms.
-	uniforms.lights.numPointlights = 0.0;
-	uniforms.lights.numSpotlights = 0.0;
+	numPointlights = 0;
+	numSpotlights = 0;
 }
 
 //Apply bloom to current image.
@@ -449,6 +494,8 @@ void Renderer::applyBloom(Uint32 blurPasses){
 
 //Display the final image on screen.
 void Renderer::displayFrame(){
+	deferredPass();
+
 	if(settings.frameBloom > 0)
 		applyBloom(settings.frameBloom);
 
@@ -475,8 +522,7 @@ void Renderer::displayFrame(){
 //Add a pointlight.
 void Renderer::pushLight(Pointlight light){
 	if(uniforms.lights.numPointlights < MAX_POINTLIGHTS){
-		uniforms.lights.pointlights[(Uint32)uniforms.lights.numPointlights] = light;
-		uniforms.lights.numPointlights++;
+		uniforms.lights.pointlights[numPointlights++] = light;
 	}else{
 		std::cout<<"WARNING: Pointlight capacity full. Cannot add more."<<std::endl;
 	}
@@ -485,8 +531,7 @@ void Renderer::pushLight(Pointlight light){
 //Add a spotlight.
 void Renderer::pushLight(Spotlight light){
 	if(uniforms.lights.numSpotlights < MAX_SPOTLIGHTS){
-		uniforms.lights.spotlights[(Uint32)uniforms.lights.numSpotlights] = light;
-		uniforms.lights.numSpotlights++;
+		uniforms.lights.spotlights[numSpotlights++] = light;
 	}else{
 		std::cout<<"WARNING: Spotlight capacity full. Cannot add more."<<std::endl;
 	}
@@ -506,8 +551,8 @@ void Renderer::drawModel(StaticModel* mesh, Mat4 model){
 		request.numBones = 0;
 		request.animTime = 0.0;
 		request.model = model;
-		request.centroid = model * Vec3(0.0, 0.0, 0.0);
-		request.cullRadius = 1.0;
+		request.centroid = model * mesh->centroid;
+		request.cullRadius = mesh->cullRadius;
 
 		drawQueue[numRequests++] = request;
 	}
@@ -527,11 +572,52 @@ void Renderer::drawModel(AnimatedModel* mesh, Mat4 model, Animation* anim, float
 		request.numBones = mesh->numBones;
 		request.animTime = animTime;
 		request.model = model;
-		request.centroid = model * Vec3(0.0, 0.0, 0.0);
-		request.cullRadius = 1.0;
+		request.centroid = model * mesh->centroid;
+		request.cullRadius = mesh->cullRadius;
 
 		drawQueue[numRequests++] = request;
 
 		mostBones = std::max(mostBones, request.numBones);
 	}
+}
+
+//Set camera heading.
+void Renderer::setCameraView(float yaw, float pitch){
+	this->yaw = yaw;
+	this->pitch = pitch;
+	
+	if(pitch > 1.56){pitch = 1.56;}
+	else if(pitch < -1.56){pitch = -1.56;}
+
+	camDirection.x = cos(yaw) * cos(pitch);
+	camDirection.z = sin(pitch);
+	camDirection.y = sin(yaw) * cos(pitch);
+}
+
+//Update camera heading.
+void Renderer::updateCameraView(float Xrelative, float Yrelative){
+	yaw -= Xrelative * settings.cameraSensitivity;
+	pitch -= Yrelative * settings.cameraSensitivity;
+	
+	if(pitch > 1.56){pitch = 1.56;}
+	else if(pitch < -1.56){pitch = -1.56;}
+
+	camDirection.x = cos(yaw) * cos(pitch);
+	camDirection.z = sin(pitch);
+	camDirection.y = sin(yaw) * cos(pitch);
+}
+
+//Get camera direction.
+Vec3 Renderer::getCameraDirection(){
+	return camDirection;
+}
+
+//Get camera right direction.
+Vec3 Renderer::getCameraRight(){
+	return Vec3::normalize(Vec3::cross(camDirection, Vec3(0,0,1)));
+}
+
+//Get camera front direction.
+Vec3 Renderer::getCameraFront(){
+	return Vec3::normalize(Vec3(camDirection.x, camDirection.y, 0.0));
 }

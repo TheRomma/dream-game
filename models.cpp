@@ -118,6 +118,9 @@ bool StaticModel::init(const char* filename){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	memcpy(centroid.ptr(), file.centroid, 3 * sizeof(float));
+	cullRadius = file.cullRadius;
+
 	return true;
 }
 
@@ -188,6 +191,9 @@ bool AnimatedModel::init(const char* filename){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	memcpy(centroid.ptr(), file.centroid, 3 * sizeof(float));
+	cullRadius = file.cullRadius;
 
 	return true;
 }
